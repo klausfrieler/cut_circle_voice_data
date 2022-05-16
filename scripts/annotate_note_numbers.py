@@ -1,6 +1,5 @@
 def annotate_note_numbers(piece, voice, first_measure, last_measure):
     count = 1
-    piece = piece
     voice = piece.parts[voice]
     part = voice.measures(first_measure, last_measure)
     for n in part.recurse().getElementsByClass("Note"):
