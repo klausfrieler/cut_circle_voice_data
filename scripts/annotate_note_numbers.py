@@ -6,3 +6,5 @@ def annotate_note_numbers(piece, voice, first_measure, last_measure):
         if n.tie is None or n.tie.type == "start":
             n.addLyric(str(count))
             count += 1
+    count = 1
+
