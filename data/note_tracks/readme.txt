@@ -5,6 +5,7 @@ Annotationen von Fehlern:
 	3. Falscher/deutlich zu früher Einsatz: zu früh gesungene Note wurde mir "x" annotiert (z.B. 65x)
 	4. Richtige Note gesungen, aber von Tony nicht erkannt: Note wie normal annotiert, aber mit "g" ergänzt (z.B. 64g)
 	5. Zusätzliche Note gesungen, die nicht im Notentext steht: nur "x" annotiert
-	6. Lange Note wird nicht durchgehalten, sondern mit Atempause unterbrochen: zweiter Teil der Note mit "x" annotiert (z.B. 65x)
-
-Annotationen bei zwei Varianten für einen Ton: Note mit "a" und "b" Differenziert (z.B. 100a)
+	6. Lange Note wird nicht durchgehalten, sondern mit Atempause unterbrochen: zweiter Teil der Note mit "c" annotiert (z.B. 65c)
+Sonstiges:
+	1. Annotationen bei zwei Varianten für einen Ton: Note mit "a" und "b" Differenziert (z.B. 100a)
+	2. Wird ein Note auf einer anderen Tonhöhe gesungen, die nicht offensichtlich falsch/dissonant ist, aber nicht im Notentext steht, wird diese mit "n" annotiert (z.B. 115n)
