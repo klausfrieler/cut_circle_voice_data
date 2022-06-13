@@ -1,3 +1,10 @@
+def mixed_fraction(fractstr):
+    temp = fractstr.split(" ")
+    if len(temp) == 1:
+        return float(Fraction(fractstr))
+    return float(temp[0])+float(Fraction(temp[1]))
+
+    
 def xml_to_mcsv_by_class(piece, voice, first_measure, last_measure, event_type = "Note"):
     count = 1
     voice = piece.parts[voice]
