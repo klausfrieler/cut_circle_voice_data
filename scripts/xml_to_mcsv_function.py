@@ -39,7 +39,7 @@ def xml_to_mcsv_by_class(piece, voice, first_measure, last_measure, event_type =
                 last_time_signature = mixed_fraction(n.activeSite.timeSignature.ratioString)
             if event_type == "Chord":
                 pitches = [_.ps for _ in n.pitches]
-                labels = [chr(i + 97) for i in range(0, n.pitches)]
+                labels = [chr(i + 97) for i in range(len(n.pitches))]
             else:
                 pitches = [n.pitch.ps]
             for idx, p in enumerate(pitches):
