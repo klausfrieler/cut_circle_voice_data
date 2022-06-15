@@ -2,7 +2,7 @@ Annotationen von Fehlern:
 
 	1. Note wurde ausgelassen/nicht gesungen: Note nicht annotiert, Nummerierung überspringt die Note
 	2. Tonwiederholungen wurden durchgehalten: Nur erste Note wurde annotiert, Nummerierung überspringt zweite Note
-	3. Falscher/deutlich zu früher Einsatz: zu früh gesungene Note wurde mir "x" annotiert (z.B. 65x)
+	3. Allgemein fehlerhafte Note (Zu früher Einsatz, zu kurz/lang ausgehalte): fehlerhafte Note wurde mir "x" annotiert (z.B. 65x)
 	4. Richtige Note gesungen, aber von Tony nicht erkannt: Note wie normal annotiert, aber mit "g" ergänzt (z.B. 64g)
 	5. Zusätzliche Note gesungen, die nicht im Notentext steht: nur "x" annotiert
 	6. Lange Note wird nicht durchgehalten, sondern mit Atempause unterbrochen: zweiter Teil der Note mit "~" annotiert (z.B. 65~)
