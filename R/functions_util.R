@@ -5,6 +5,10 @@ midi_to_hz <-function(midi){
 }
 
 hz_to_midi <- function(hz){
+  if(!is.numeric(hz)){
+    browser()
+    hz <- str_extract("[0-9.-]+")
+  }
   12 * log2(hz/440)  + 69
 }
 
