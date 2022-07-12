@@ -45,8 +45,9 @@ read_note_tracks_by_list <- function(file_list){
              pitch_hz = pitch,
              pitch = hz_to_midi(pitch_hz))  %>% 
       mutate(ioi = c(diff(onset), NA), 
-             int_midi = c(diff(pitch), NA)) %>% bind_cols(metadata_from_fname(fn)) %>% 
-      rename()
+             int_midi = c(diff(pitch), NA)) %>% 
+      bind_cols(metadata_from_fname(fn)) %>% 
+      select(-dummy)
     
     pitch_out <- tmp %>% pull(pitch) %>%  boxplot() %>% pluck("out")
     messagef("[%s] Found %d pitch outliers", fn, length(pitch_out))
@@ -55,12 +56,9 @@ read_note_tracks_by_list <- function(file_list){
     duration_out <- tmp %>% pull(duration) %>%  boxplot() %>% pluck("out")
     duration_out <- duration_out[duration_out < mean(tmp$duration)]
     messagef("[%s] Found %d duration outliers", fn, length(duration_out))
-    print(tmp)
-    browser()
-    tmp %>% filter(!(duration %in% duration_out))
-    
+    tmp %>% filter(!(duration %in% duration_out)) 
   }) %>% 
-    select(pos, onset, onset_hms, pitch = pitch_midi, pitch_hz = pitch, ioi, int = int_midi, everything() )
+    select(pos, onset, onset_hms, pitch, pitch_hz, ioi, int = int_midi, everything() )
   
   
 }
