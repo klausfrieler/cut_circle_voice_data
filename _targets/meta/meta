@@ -13,17 +13,26 @@ data_dir|stem|f362de03df3b496c|db99bee012f69e6e|ef46db3751d8e999|-519216141||t19
 file_list_2ff79098|branch|f47a05d0e0bf51ad|881a4bed17d02669|c369f38dc63629b8|1649442397||t19066.9330819518s|5ccb3d41d74b2974|116|rds|vector|file_list||0||
 data_67ede66f|branch|520f6b4b67369b3b|e37c7fbd2c993917|48924fbcff198477|352820637||t19066.9330882037s|43bf8c779e420104|87866|feather|vector|data||0.36||
 file_list|stem|655a35e773f73544|881a4bed17d02669|7dc1214199b3b8ff|149261240||t19066.9388082953s|dc6150ff0244dbb7|99|rds|vector||file_list_2380522d*file_list_edfeb9cf*file_list_a3ce07a1|1.12|Paket forcats wurde unter R Version 3.6.3 erstellt|
-hz_to_midi|function|a3561fb642f7dbd2||||||||||||||
-messagef|function|be176c6e417e8f87||||||||||||||
 metadata_from_fname|function|e33917911e223824||||||||||||||
+pitch_check_plot|stem|e485dc501a5af615|93a7b3784b3312aa|8c9d5a8acebf3deb|2028494730||t19067.6886334222s||260609|rds|vector|||0.55|replacing previous import purrrtranspose by tabrtranspose when loading parkR|Objekt pc_labels_flat nicht gefunden
+score_dir|stem|3c28795d0eee1906|a87c1a77a4470d32|ef46db3751d8e999|818116097||t19185.9254497198s|98bde5196c354f79|70|rds|vector|||0||
+scores|stem|9f1a53ff28e74f9c|f1892a58e9111ed6|eb400a0f682ea45b|-1359168496||t19185.9690612887s|3d3cf26ab9e554bf|13999|rds|vector|||1.69|Paket forcats wurde unter R Version 3.6.3 erstellt|
+hz_to_midi|function|5036e53b21c8d15f||||||||||||||
+messagef|function|be176c6e417e8f87||||||||||||||
 integer_deviation|function|44f3264ae6286046||||||||||||||
 pitch_ridge_plot|function|48daf1e810ca9e04||||||||||||||
+voices|object|f5846fd49a6599f8||||||||||||||
+pieces|object|f2c45b0da20beeff||||||||||||||
 midi_to_hz|function|9b6bbeeee6fe8f79||||||||||||||
 list_csv_files|function|0315c6f8a6c68eab||||||||||||||
-read_note_tracks_by_list|function|19ae148b391fbe5d||||||||||||||
+annotate_note_tracks|function|db312987f45c5fad||||||||||||||
 find_global_tuning_offset|function|91eb68364a0de78d||||||||||||||
+note_track_metadata_from_fname|function|c79cbe77347934d5||||||||||||||
+score_metadata_from_fname|function|46edc3a2a1204562||||||||||||||
 hz_to_cents|function|7a22beb56ff18c7d||||||||||||||
-read_note_tracks|function|ce2c9b2aa438b380||||||||||||||
-data_index|stem|77b95d77dc7f5ff2|eb12360927b51a67|ef46db3751d8e999|1593745427|data/note_track_idx.rds|t19179.3646292281s|015fa3e1fc42f98a|106|file|vector|||2.01|Paket forcats wurde unter R Version 3.6.3 erstellt|
-data|stem|28ec7827058c9fa5|1273d7f83a575c48|733b91aaf427feb3|1588979285||t19179.3646616761s|13900463569c6315|11848|rds|vector|||0.54|100 parsing failures.row col  expected    actual                                        file  1   3 columns 5 columns datanote_tracksa_d1_con2_t6.3.2_hs1.csv  2   3 columns 5 columns datanote_tracksa_d1_con2_t6.3.2_hs1.csv  3   3 columns 5 columns datanote_tracksa_d1_con2_t6.3.2_hs1.csv  4   3 columns 5 columns datanote_tracksa_d1_con2_t6.3.2_hs1.csv  5   3 columns 5 columns datanote_tracksa_d1_con2_t6.3.2_hs1.csv... ... ......... ......... ...........................................See problems... for more details.|
-pitch_check_plot|stem|e485dc501a5af615|93a7b3784b3312aa|8c9d5a8acebf3deb|2028494730||t19067.6886334222s||260609|rds|vector|||0.55|replacing previous import purrrtranspose by tabrtranspose when loading parkR|Objekt pc_labels_flat nicht gefunden
+read_note_tracks_by_list|function|593289fd6bdd35ca||||||||||||||
+read_score_files|function|cf5dac8811a9dee6||||||||||||||
+read_note_tracks|function|bc3a5b34e1719ba9||||||||||||||
+data_index|stem|a4473ea2a72e8c17|eb12360927b51a67|ef46db3751d8e999|1593745427|data/note_track_idx.rds|t19185.9768335306s|b956d5a3f2560627|2080|file|vector|||2.34|Paket forcats wurde unter R Version 3.6.3 erstellt|
+note_tracks|stem|02fbf3f3c06b4483|1273d7f83a575c48|344623ea241c6e27|-1799183516||t19185.9771009858s|4b56f83b05d71871|2301799|rds|vector|||22.4|34 parsing failures.row col  expected    actual                                 file  1   5 columns 3 columns datanote_tracksm3_take28_hs6.csv  2   5 columns 3 columns datanote_tracksm3_take28_hs6.csv  3   5 columns 3 columns datanote_tracksm3_take28_hs6.csv  4   5 columns 3 columns datanote_tracksm3_take28_hs6.csv  5   5 columns 3 columns datanote_tracksm3_take28_hs6.csv... ... ......... ......... ....................................See problems... for more details.|
+data|stem|acdf9d3f4dceac26|33fa2280bbec8c10|8d57866ff7680784|1588979285||t19185.9771086604s|18c5791086ccd7d6|2772289|rds|vector|||0.07||
