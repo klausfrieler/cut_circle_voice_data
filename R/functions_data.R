@@ -58,6 +58,7 @@ read_note_tracks_by_list <- function(file_list){
   ret <- 
     map_dfr(file_list, function(fn){
     #browser()
+    messagef("Reading note track %s", fn)
     tmp <- readr::read_csv(fn, 
                            col_names = c("onset", "pitch", "duration", "dummy", "pos"),
                            col_types = col_types) %>%
@@ -70,26 +71,12 @@ read_note_tracks_by_list <- function(file_list){
       bind_cols(note_track_metadata_from_fname(fn)) %>% 
       select(-dummy)
     if(all(is.na(tmp$pos))){
+      #browser()
       outliers <<- bind_rows(outliers, 
-                             tmp %>% slice(1) %>% mutate(outlier_type = "missing_col"))
+                             tmp %>% slice(1) %>% mutate(type = "missing_col"))
       
     }
-    pitch_out <- tmp %>% pull(pitch) %>%  boxplot() %>% pluck("out")
-    #messagef("[%s] Found %d pitch outliers", fn, length(pitch_out))
-    if(length(pitch_out) > 0){
-      outliers <<- bind_rows(outliers, 
-                             tmp %>% filter(pitch %in% pitch_out) %>% mutate(outlier_type = "pitch"))
-    }
-    tmp <- tmp %>% filter(!(pitch %in% pitch_out))
-    
-    duration_out <- tmp %>% pull(duration) %>%  boxplot() %>% pluck("out")
-    duration_out <- duration_out[duration_out < mean(tmp$duration)]
-    #messagef("[%s] Found %d duration outliers", fn, length(duration_out))
-    if(length(duration_out) > 0){
-      outliers <<- bind_rows(outliers, 
-                             tmp %>% filter(pitch %in% pitch_out) %>% mutate(outlier_type = "duration"))
-    }
-    tmp %>% filter(!(duration %in% duration_out)) 
+    tmp
   }) %>% 
     mutate(note_label = str_extract(pos, "^[0-9]+[a-c]?"),
            pos_spec = str_extract(pos, "[^0-9]$") %>% tolower() %>% str_replace("-", "~"),
@@ -97,6 +84,7 @@ read_note_tracks_by_list <- function(file_list){
            note_id = sprintf("%s:%s", id, note_label)) %>% 
     select(pos, onset, onset_hms, pitch, pitch_hz, ioi, int = int_midi, everything() ) 
   ret[is.na(ret$pos_spec), ]$pos_spec <- ""
+  
   assign("outliers", outliers, globalenv())
   ret
 }

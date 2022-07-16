@@ -20,28 +20,28 @@ scores|stem|9f1a53ff28e74f9c|f1892a58e9111ed6|eb400a0f682ea45b|-1359168496||t191
 data_index|stem|d975303603e4eb2a|2431fb0033d10ce9|ef46db3751d8e999|1593745427|data/metadata/note_track_idx.rds|t19187.5677407481s|39fe15a85e5b497c|2130|file|vector|||1.09|Paket forcats wurde unter R Version 3.6.3 erstellt|
 track_info|stem|7632aea6248cfb99|1da431dfbf7d015f|ef46db3751d8e999|-295957070|data/metadata/track_coding.xlsx|t19187.5606924032s|cf851d3509e56988|15057|file|vector|||0||
 hz_to_midi|function|5036e53b21c8d15f||||||||||||||
+messagef|function|be176c6e417e8f87||||||||||||||
 integer_deviation|function|44f3264ae6286046||||||||||||||
 pitch_ridge_plot|function|48daf1e810ca9e04||||||||||||||
 voices|object|f5846fd49a6599f8||||||||||||||
 pieces|object|f2c45b0da20beeff||||||||||||||
 midi_to_hz|function|9b6bbeeee6fe8f79||||||||||||||
 list_csv_files|function|0315c6f8a6c68eab||||||||||||||
-messagef|function|be176c6e417e8f87||||||||||||||
 annotate_note_tracks|function|95bf70f861569870||||||||||||||
 remove_linear_trend|function|3360077f26167192||||||||||||||
 end_to_end_diff|function|18e6df961716b388||||||||||||||
+get_synchrony_indicators|function|375cba1822daa7b7||||||||||||||
+find_global_tuning_offset|function|434712c18f78e86d||||||||||||||
 note_track_metadata_from_fname|function|6289ad0b70bfefc4||||||||||||||
 score_metadata_from_fname|function|46edc3a2a1204562||||||||||||||
 hz_to_cents|function|7a22beb56ff18c7d||||||||||||||
-find_global_tuning_offset|function|434712c18f78e86d||||||||||||||
-get_synchrony_indicators|function|7b1ec40f0cd358f1||||||||||||||
 remove_all_linear_trends|function|90a1aa6164ffe012||||||||||||||
 get_linear_trend|function|1d8075bc185b1fc3||||||||||||||
-read_note_tracks_by_list|function|b7fd366c774aaac5||||||||||||||
-read_score_files|function|cf5dac8811a9dee6||||||||||||||
 retune_all|function|fcde51e60eef1b0d||||||||||||||
+read_note_tracks_by_list|function|1c5142a9f1cc1b6f||||||||||||||
+read_score_files|function|cf5dac8811a9dee6||||||||||||||
 analyze_drift_and_tuning|function|7a9d8e7f98d16f5e||||||||||||||
-read_note_tracks|function|0d0015a7901ef2bd||||||||||||||
-note_tracks|stem|5a6a936ce9a1c328|1273d7f83a575c48|bf85a3e76c8912ac|-1799183516||t19188.9402414602s|89b9aa3a5bee4402|2316872|rds|vector|||18.52|34 parsing failures.row col  expected    actual                                 file  1   5 columns 3 columns datanote_tracksm3_take28_hs6.csv  2   5 columns 3 columns datanote_tracksm3_take28_hs6.csv  3   5 columns 3 columns datanote_tracksm3_take28_hs6.csv  4   5 columns 3 columns datanote_tracksm3_take28_hs6.csv  5   5 columns 3 columns datanote_tracksm3_take28_hs6.csv... ... ......... ......... ....................................See problems... for more details.|
-data|stem|b809682c21a45feb|cc0367f6cd1864fc|bcce4cf13983c991|1588979285||t19188.9402528454s|8bec2cd2f461d473|2820077|rds|vector|||0.42||
-data_red|stem|3dd050ee620460af|fdd312f1ce7f6161|711b6044210456de|796550064||t19188.940275816s|778d1a984a7e2b42|3287269|rds|vector|||1.4||
+read_note_tracks|function|6c93b2d4a04b1adb||||||||||||||
+note_tracks|stem|3b06a02524a3e0f4|1273d7f83a575c48|275a307ada2182a8|-1799183516||t19189.6878875124s|fca771707c91821b|2327586|rds|vector|||12.48|34 parsing failures.row col  expected    actual                                 file  1   5 columns 3 columns datanote_tracksm3_take28_hs6.csv  2   5 columns 3 columns datanote_tracksm3_take28_hs6.csv  3   5 columns 3 columns datanote_tracksm3_take28_hs6.csv  4   5 columns 3 columns datanote_tracksm3_take28_hs6.csv  5   5 columns 3 columns datanote_tracksm3_take28_hs6.csv... ... ......... ......... ....................................See problems... for more details.|
+data|stem|197b0778578a3971|cc0367f6cd1864fc|90cf5ec8aaa7ef32|1588979285||t19189.687897923s|3745dad872eaf774|2826723|rds|vector|||0.33||
+data_red|stem|0df3e7f2c4e157f2|fdd312f1ce7f6161|be6c5ab8eef00183|796550064||t19189.6879186672s|0dcff9e75ff54189|3301990|rds|vector|||1.21||
