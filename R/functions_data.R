@@ -58,7 +58,7 @@ read_note_tracks_by_list <- function(file_list){
   ret <- 
     map_dfr(file_list, function(fn){
     #browser()
-    messagef("Reading note track %s", fn)
+    messagef("Reading  %s", fn)
     tmp <- readr::read_csv(fn, 
                            col_names = c("onset", "pitch", "duration", "dummy", "pos"),
                            col_types = col_types) %>%
@@ -78,12 +78,25 @@ read_note_tracks_by_list <- function(file_list){
     }
     tmp
   }) %>% 
-    mutate(note_label = str_extract(pos, "^[0-9]+[a-c]?"),
-           pos_spec = str_extract(pos, "[^0-9]$") %>% tolower() %>% str_replace("-", "~"),
+    mutate(pos_orig = pos,
+           note_label = str_extract(pos, "^[0-9]+[a-cx]?"),
+           pos_spec = str_extract(pos, "[^0-9]+$") %>% 
+             tolower() %>% 
+             str_replace("-", "~") %>% 
+             str_replace("x~", "x") %>% 
+             str_replace("~x", "x") %>% 
+             str_replace("bx", "x"),
            pos = as.numeric(str_extract(pos, "^[0-9]+")),
+           voice_type = factor(voice_type, levels = c("sopran", "alt", "tenor", "bass")),           
            note_id = sprintf("%s:%s", id, note_label)) %>% 
     select(pos, onset, onset_hms, pitch, pitch_hz, ioi, int = int_midi, everything() ) 
+  ret[is.na(ret$repetition),]$repetition <- 1
   ret[is.na(ret$pos_spec), ]$pos_spec <- ""
+  ret <- ret %>% 
+    mutate(piece_take = sprintf("%s:%s:r%d", take, piece, repetition),
+           error = as.integer(pos_spec %in% c("n", "x", "~")))  
+
+  #browser()
   
   assign("outliers", outliers, globalenv())
   ret
@@ -126,17 +139,21 @@ annotate_note_tracks <- function(note_tracks, scores, track_info){
     select(take, condition) %>% 
     mutate(take = sprintf("take%s", take), 
            condition = c("tc" = "touch", "ntc" = "no-touch", "ntf" = "far-apart")[condition])
-  note_tracks[is.na(note_tracks$repetition),]$repetition <- 1
+  browser()
   ret <- 
     note_tracks %>% 
     left_join(scores %>% select(-id), by = c("piece", "voice_type", "note_label")) %>% 
-    filter(!is.na(pos), is.na(pos_spec) | pos_spec != "~", is.na(pos_spec) | pos_spec != "x") %>% 
-    mutate(d_pitch = pitch - nom_pitch, 
-           piece_take = sprintf("%s:%s:r%d", take, piece, repetition),
-           voice_type = factor(voice_type, levels = c("sopran", "alt", "tenor", "bass")))
-  ret[is.na(ret$pos_spec),]$pos_spec <- ""
+    filter(!is.na(pos),  pos_spec != "~", pos_spec != "x", pos_spec != "n", pos_spec != "g") %>% 
+    mutate(d_pitch = pitch - nom_pitch)
 
   ret  <- ret %>% left_join(track_info, by = "take")
+  sync_points <- scores %>% 
+    group_by(piece, nom_onset) %>% 
+    summarise(sync_point = n() == 4, .groups = "drop") %>% 
+    filter(sync_point) %>% 
+    select(piece, nom_onset)
+  ret <- ret %>% left_join(sync_points %>% mutate(sync = TRUE)) 
+  ret[is.na(ret$sync),]$sync <- FALSE
   ret
 }
 
