@@ -20,15 +20,17 @@ integer_deviation <- function(x){
   mean(abs(round(x) - x))
 }  
 
-find_global_tuning_offset <- function(pitch_vector, epsilon = .1){
+find_global_tuning_offset <- function(pitch_vector, epsilon = .1, verbose = F){
   step <- .1
   search_seq <- seq(-.5, .5,  step)  
   dev <- Inf
   new_step <- step  
   offset <- Inf
-  browser()
+  #browser()
   while(dev > epsilon && new_step > 1e-6){
-    messagef("Running search with step = %f, seq len = %d, current dev = %f, current offset = %f.", new_step, length(search_seq), dev, offset)
+    if(verbose){
+      messagef("Running search with step = %f, seq len = %d, current dev = %f, current offset = %f.", new_step, length(search_seq), dev, offset)
+    }
     tmp <- 
       map_dfr(search_seq, function(offset){
       tibble(offset = offset, dev = integer_deviation(pitch_vector - offset))
@@ -39,7 +41,6 @@ find_global_tuning_offset <- function(pitch_vector, epsilon = .1){
     dev <- tmp %>% pull(dev)
     search_seq <- seq(offset - new_step/2, offset + new_step/2, new_step/10)
     new_step <- new_step/10
-    
   }
   offset
 }
