@@ -33,7 +33,7 @@ note_track_metadata_from_fname <- function(fname){
     tmp <- str_split(elts[1], "-")[[1]]
     tibble(piece = pieces[tmp[1]], 
            repetition = ifelse(is.na(tmp[2]), 1, as.numeric(tmp[2])),
-           take = str_remove(elts[2], "b"),
+           take = sprintf("take%02d", str_remove(elts[2], "b") %>% str_extract("[0-9]+$") %>% as.integer()),
            voice_type = str_extract(voices[ substr(elts[3], 1, 3) ], "^[a-z]+"),
            voice_no = str_extract(voices[substr(elts[3], 1, 3) ], "[0-9]+$"),
            headset = substr(elts[3], 1, 3) 
@@ -126,27 +126,32 @@ read_score_files <- function(score_dir = "data/note_data_csv", pattern = "*.csv"
              nom_duration = duration,
              bar = measure_number) %>% 
       bind_cols(score_metadata_from_fname(fn))
-  })
+  }) %>% 
+    mutate(voice_type = factor(voice_type, levels = c("sopran", "alt", "tenor", "bass")))
   browser()
   #Josquins all a whole tone too low?!
   ret[str_detect(ret$piece, "jos"),]$nom_pitch <- ret[str_detect(ret$piece, "jos"),]$nom_pitch - 2 
   ret
 }
 
-annotate_note_tracks <- function(note_tracks, scores, track_info){
-  track_info <- readxl::read_excel(track_info) %>% 
+read_track_info <- function(path){
+  readxl::read_excel(path) %>% 
     filter(!is.na(piece)) %>% 
-    select(take, condition) %>% 
-    mutate(take = sprintf("take%s", take), 
+    select(take, condition, day) %>% 
+    mutate(take = sprintf("take%02d", as.integer(take)), 
            condition = c("tc" = "touch", "ntc" = "no-touch", "ntf" = "far-apart")[condition])
-  browser()
+  
+}
+
+annotate_note_tracks <- function(note_tracks, scores, track_info){
   ret <- 
     note_tracks %>% 
     left_join(scores %>% select(-id), by = c("piece", "voice_type", "note_label")) %>% 
     filter(!is.na(pos),  pos_spec != "~", pos_spec != "x", pos_spec != "n", pos_spec != "g") %>% 
     mutate(d_pitch = pitch - nom_pitch)
-
-  ret  <- ret %>% left_join(track_info, by = "take")
+  print(str(ret$voice_type))
+  ret  <- ret %>% left_join(track_info, by = "take") %>% mutate(day = sprintf("day-%d", day))
+  
   sync_points <- scores %>% 
     group_by(piece, nom_onset) %>% 
     summarise(sync_point = n() == 4, .groups = "drop") %>% 
@@ -157,19 +162,8 @@ annotate_note_tracks <- function(note_tracks, scores, track_info){
   ret
 }
 
-retune_all <- function(pitch_data){
-  map_dfr(unique(pitch_data$piece_take), function(tp){
-    tmp <- pitch_data %>% 
-      filter(piece_take == tp)
-    offset <- tmp %>% 
-      pull(pitch) %>% 
-      find_global_tuning_offset(epsilon = .01)  
-    messagef("Retuning %s with offset %f", tp, offset)
-    tmp %>% mutate(pitch_u = pitch, pitch = pitch - offset)
-  })
-}
 
-end_to_end_diff <- function(x){
+end_to_start_diff <- function(x){
   x[length(x)] - x[1]
 }
 
@@ -187,6 +181,31 @@ remove_linear_trend <- function(pitch_data, slope = NULL, intercept = NULL){
   pitch_data
 }
 
+get_pitch_stats <- function(data){
+  data %>% group_by(piece_take, headset) %>% 
+    mutate(MAPE = mean(abs(d_pitch_res), na.rm = T),
+           MPP  = mean(sd(d_pitch_res, na.rm = T)),
+           LMAPE = -log(MAPE),
+           LMPP  = -log(MPP)) %>% 
+    ungroup() %>% 
+    distinct(piece, take, piece_take, day, condition, headset, repetition, MAPE, MPP, LMAPE, LMPP)
+}
+
+get_pitch_stats_inner_voice <- function(data){
+  data %>% 
+    select(piece_take, voice_type, voice_no, condition, day, piece, pos, pitch) %>% 
+    pivot_wider(id_cols = -c(voice_no, pitch), 
+                names_from = voice_no, 
+                values_from = pitch, names_prefix = "voice") %>% 
+    mutate(d_voice = voice2 - voice1) %>% 
+    group_by(piece_take, day, piece, condition, voice_type) %>% 
+    summarise(
+      MAPE = mean(abs(d_voice), na.rm = T),
+      MPP  = mean(sd(d_voice, na.rm = T)),
+      LMAPE = -log(MAPE),
+      LMPP  = -log(MPP), .groups = "drop")
+}
+
 remove_all_linear_trends <- function(pitch_data, max_error = 1){
   pitch_data <- pitch_data %>% filter(abs(d_pitch) < max_error)
   map_dfr(unique(pitch_data$piece_take), function(tp){
@@ -197,6 +216,7 @@ remove_all_linear_trends <- function(pitch_data, max_error = 1){
   })
   
 }
+
 get_linear_trend <- function(pitch_data, type = "position"){
   if(type == "position"){
     model <- lm(d_pitch ~ pos, data = pitch_data) 
@@ -206,7 +226,7 @@ get_linear_trend <- function(pitch_data, type = "position"){
   }
   ret <- model %>% broom::tidy() %>% 
     mutate(type = type, 
-           total_drift = predict(model) %>% end_to_end_diff())
+           total_drift = predict(model) %>% end_to_start_diff())
   ret
 }
 
@@ -225,6 +245,8 @@ analyze_drift_and_tuning <- function(pitch_data){
              voice_type = "all", 
              offset = global_offset,
              piece_take = tp, 
+             day = tmp$day[1], 
+             piece = tmp$piece[1],
              condition = tmp$condition[1])
     
     map_dfr(unique(tmp$headset), function(hs){
@@ -239,17 +261,55 @@ analyze_drift_and_tuning <- function(pitch_data){
         mutate(scope = hs, 
                voice_type = tmp$voice_type[1], 
                offset = offset, 
+               day = tmp$day[1], 
+               piece = tmp$piece[1],
                piece_take = tp,
+               headset = hs,
                condition = tmp$condition[1])
       
     }) %>% 
       bind_rows(total) %>% 
-      select(piece_take, type, scope, voice_type, condition, term, everything())
+      select(piece_take, type, scope, voice_type, condition, day, piece, headset, term, everything())
   })
+}
+sig_stars <- Vectorize(
+  function(p_value){
+    if(is.na(p_value)){
+      return(NA)
+    }
+    stars <- ""
+    if (p_value < 0.1) stars <- "."
+    if (p_value < 0.05) stars <- "*"
+    if (p_value < 0.01) stars <- "**"
+    if (p_value < 0.001) stars <- "***" 
+    sprintf("%.3f%s", p_value, stars)
+  }
+)
+
+make_nice_lmer <- function(lmer_mod, name = ""){
+  broom.mixed::tidy(lmer_mod) %>% 
+    mutate(name = !!name, 
+           p_val_str = sig_stars(p.value)) %>% 
+    bind_cols(broom.mixed::glance(lmer_mod)) %>% 
+    bind_cols(performance::r2_nakagawa(lmer_mod) %>% as.data.frame() %>% select(1, 2) %>% as_tibble()) 
+    
+}
+
+get_intonation_model_single <- function(pitch_stats){
+  model.lmape <- lmerTest::lmer(LMAPE ~ condition + (1|piece) + (1|day) + (1|headset), data = pitch_stats)
+  model.lmpp <- lmerTest::lmer(LMPP ~ condition + (1|piece) + (1|day) + (1|headset), data = pitch_stats)
+  bind_rows(make_nice_lmer(model.lmape, "LMAPE"), 
+            make_nice_lmer(model.lmpp, "LMPP"))
+}
+
+get_intonation_model_inner_voice <- function(pitch_stats_inner){
+  model.lmape  <- pitch_stats_inner %>% lmerTest::lmer(LMAPE ~ condition + (1|piece) + (1|voice_type) + (1|day), data = .)
+  model.lmpp <-pitch_stats_inner %>% lmerTest::lmer(LMPP ~ condition + (1|piece) + (1|voice_type) + (1|day), data = .)
+  bind_rows(make_nice_lmer(model.lmape, "LMAPE"), 
+            make_nice_lmer(model.lmpp, "LMPP"))
 }
 
 get_synchrony_indicators <- function(pitch_data){
-  
   map_dfr(unique(pitch_data$piece_take), function(tp){
     tmp <- pitch_data %>% filter(piece_take == tp) 
     
@@ -265,8 +325,9 @@ get_synchrony_indicators <- function(pitch_data){
                     names_from = c(voice_no), 
                     values_from = onset, names_prefix = "onset") 
       
-      browser()
-      tmp2 %>% mutate(d_onset = onset1  - mean(onset1[1:5]) - onset2 + mean(onset2[1:5])) %>% 
+      #browser()
+      tmp2 %>% 
+        mutate(d_onset = onset1  - mean(onset1[1:5]) - onset2 + mean(onset2[1:5])) %>% 
         summarise(synchrony = mean(d_onset, na.rm = T), 
                   abs_phase = mean(abs(d_onset), na.rm = T), 
                   phase_prop = mean(sign(d_onset), na.rm = T))  %>% 
@@ -274,4 +335,26 @@ get_synchrony_indicators <- function(pitch_data){
       
     })
   }) %>% left_join(pitch_data %>% distinct(piece_take, condition), by = "piece_take")
+}
+
+get_vertical_indicators <- function(pitch_data){
+  indicators <- 
+    pitch_data %>% 
+    filter(sync)%>% 
+    group_by(piece_take, nom_onset, condition, day, piece) %>%
+    summarise(onset_sd = sd(onset), 
+              MAPE = mean(abs(d_pitch_res)),
+              LMOP = -log(onset_sd),
+              LMAPE = -log(MAPE),
+              .groups = "drop") 
+  indicators
+}
+get_vertical_models <- function(vertical_indicators){
+  model.lmape  <- vertical_indicators %>% 
+    lmerTest::lmer(LMAPE ~ condition + (1|piece) + (1|day), data = .)
+  model.lmop <- vertical_indicators %>% 
+    lmerTest::lmer(LMOP ~ condition + (1|piece) + (1|day), data = .)
+  bind_rows(make_nice_lmer(model.lmape, "VERT_LMAPE"), 
+            make_nice_lmer(model.lmop, "VERT_LMOP"))
+  
 }
