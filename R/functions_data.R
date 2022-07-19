@@ -1,3 +1,7 @@
+library(readr)
+library(performance)
+library(broom.mixed)
+
 pieces <- c("j1" = "josquin-virgo", 
             "j2" = "josquin-dung", 
             "a1" = "dufay-agnus1", 
@@ -57,11 +61,15 @@ read_note_tracks_by_list <- function(file_list){
   )
   ret <- 
     map_dfr(file_list, function(fn){
-    #browser()
     messagef("Reading  %s", fn)
     tmp <- readr::read_csv(fn, 
                            col_names = c("onset", "pitch", "duration", "dummy", "pos"),
-                           col_types = col_types) %>%
+                           col_types = col_types) 
+    if(length(tmp) == 3){
+      tmp$pos <- NA
+      tmp$dummy <- NA
+    }
+    tmp <- tmp %>% 
       mutate(onset_hms = hms::hms(seconds = onset),
              pos = as.character(pos),
              pitch_hz = pitch,
@@ -192,9 +200,10 @@ get_pitch_stats <- function(data){
 }
 
 get_pitch_stats_inner_voice <- function(data){
+  #browser()
   data %>% 
     select(piece_take, voice_type, voice_no, condition, day, piece, pos, pitch) %>% 
-    pivot_wider(id_cols = -c(voice_no, pitch), 
+    pivot_wider(id_cols = c(piece_take, voice_type, condition, day, piece, pos), 
                 names_from = voice_no, 
                 values_from = pitch, names_prefix = "voice") %>% 
     mutate(d_voice = voice2 - voice1) %>% 
@@ -272,6 +281,7 @@ analyze_drift_and_tuning <- function(pitch_data){
       select(piece_take, type, scope, voice_type, condition, day, piece, headset, term, everything())
   })
 }
+
 sig_stars <- Vectorize(
   function(p_value){
     if(is.na(p_value)){
@@ -286,27 +296,105 @@ sig_stars <- Vectorize(
   }
 )
 
-make_nice_lmer <- function(lmer_mod, name = ""){
+make_nice_lmer <- function(lmer_mod, DV = ""){
   broom.mixed::tidy(lmer_mod) %>% 
-    mutate(name = !!name, 
+    mutate(DV = !!DV, 
            p_val_str = sig_stars(p.value)) %>% 
     bind_cols(broom.mixed::glance(lmer_mod)) %>% 
     bind_cols(performance::r2_nakagawa(lmer_mod) %>% as.data.frame() %>% select(1, 2) %>% as_tibble()) 
     
 }
 
-get_intonation_model_single <- function(pitch_stats){
-  model.lmape <- lmerTest::lmer(LMAPE ~ condition + (1|piece) + (1|day) + (1|headset), data = pitch_stats)
-  model.lmpp <- lmerTest::lmer(LMPP ~ condition + (1|piece) + (1|day) + (1|headset), data = pitch_stats)
-  bind_rows(make_nice_lmer(model.lmape, "LMAPE"), 
-            make_nice_lmer(model.lmpp, "LMPP"))
+get_lmer_model <- function(pitch_stats, 
+                           dv = "LMAPE", 
+                           fixed = "condition", 
+                           ranef = c("piece", "day", "headset"), 
+                           reduced = T){
+  map_dfr(dv, function(v){
+    form <- sprintf("%s ~ %s + %s", v, 
+                    fixed, 
+                    paste(sprintf("(1|%s)", ranef), collapse = " + "))
+    mod <- lmerTest::lmer(form, data = pitch_stats) %>% make_nice_lmer(v)
+    if(reduced){
+      mod %>% 
+        filter(effect == "fixed") %>% 
+        select(term, DV, estimate, p_val_str, R2_conditional, R2_marginal) 
+    }
+    else{
+      mod %>% select(effect, term, DV, estimate, p_val_str, R2_conditional, R2_marginal, everything())
+    }
+    
+  })
+}
+get_bootstrap_sample <- function(data){
+  data[sample(1:nrow(data), replace = T),]
+}
+
+get_permutation <- function(data, target_var = "day"){
+  stopifnot(length(target_var) == 1)
+  data %>% mutate(!!sym(target_var) := sample(!!sym(target_var)))
+}
+
+bootstrap_lm <- function(data, 
+                         dv = "LMAPE", 
+                         iv = "day", 
+                         size = 1, 
+                         type = c("bootstrap", "permutation")){
+  type = match.arg(type)      
+  map_dfr(dv, function(v1){
+    browser()
+    form <- sprintf("%s ~ %s", v1, paste(iv, collapse = " + ")) %>% as.formula()
+    map_dfr(1:size, function(n){
+      browser()
+      if(type == "bootstrap"){
+        tmp <- get_bootstrap_sample(data)
+      }
+      else{
+        tmp <- get_permutation(data, iv)
+      }
+      tmp %>% 
+        lm(form, data = .) %>% 
+        broom::tidy() %>% 
+        mutate(iter = n)
+    })
+    
+  })
+}
+
+get_intonation_model_single <- function(pitch_stats, reduced = T){
+  get_lmer_model(pitch_stats, 
+                 dv = c("LMAPE", "LMPP"), 
+                 fixed = "condition", 
+                 ranef = c("piece", "headset", "day"))  %>% 
+    mutate(model_type = "intonation_single_voice")
 }
 
 get_intonation_model_inner_voice <- function(pitch_stats_inner){
-  model.lmape  <- pitch_stats_inner %>% lmerTest::lmer(LMAPE ~ condition + (1|piece) + (1|voice_type) + (1|day), data = .)
-  model.lmpp <-pitch_stats_inner %>% lmerTest::lmer(LMPP ~ condition + (1|piece) + (1|voice_type) + (1|day), data = .)
-  bind_rows(make_nice_lmer(model.lmape, "LMAPE"), 
-            make_nice_lmer(model.lmpp, "LMPP"))
+  get_lmer_model(pitch_stats_inner, 
+                 dv = c("LMAPE", "LMPP"), fixed = "condition", 
+                 ranef = c("piece", "voice_type", "day"))  %>% 
+
+    mutate(model_type = "intonation_inner_voice")
+}
+
+get_permutation_tests <- function(pitch_stats, dv = c("LMAPE", "LMPP"), iv = c("condition", "day", "headset", "piece")){
+  map_dfr(dv, function(v1){
+    map_dfr(iv, function(v2){
+      form <- sprintf("%s ~ factor(%s)", v1, v2) %>% as.formula()
+      ipt <- coin::independence_test(form, data = pitch_stats)
+      tibble(dv = v1, iv = v2, 
+             statistic = coin::statistic(ipt) %>% as.numeric(), 
+             p.value = coin::pvalue(ipt) %>% as.numeric())
+    })
+  })  
+}
+
+check_main_effects <- function(pitch_stats, pitch_stats_inner){
+  bind_rows(get_permutation_tests(pitch_stats) %>% mutate(type = "intonation_single"),
+            get_permutation_tests(pitch_stats_inner, 
+                                  iv = c("condition", "day", "voice_type", "piece"))
+            %>% mutate(type = "intonation_inner")
+            )  %>% mutate(p_val_str = sig_stars(p.value))
 }
 
 get_synchrony_indicators <- function(pitch_data){
@@ -341,10 +429,10 @@ get_vertical_indicators <- function(pitch_data){
   indicators <- 
     pitch_data %>% 
     filter(sync)%>% 
-    group_by(piece_take, nom_onset, condition, day, piece) %>%
-    summarise(onset_sd = sd(onset), 
+    group_by(piece_take, nom_onset, condition, day, piece, repetition) %>%
+    summarise(MOP = sd(onset), 
               MAPE = mean(abs(d_pitch_res)),
-              LMOP = -log(onset_sd),
+              LMOP = -log(MOP),
               LMAPE = -log(MAPE),
               .groups = "drop") 
   indicators

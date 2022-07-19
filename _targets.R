@@ -26,6 +26,9 @@ list(
   tar_target(data_red, remove_all_linear_trends(data, max_error = 1)),
   tar_target(pitch_stats, get_pitch_stats(data_red)),
   tar_target(pitch_stats_inner, get_pitch_stats_inner_voice(data_red)),
+  tar_target(main_effects, check_main_effects(pitch_stats, pitch_stats_inner)),
+  tar_target(main_effects_LMAPE, plot_main_effect(pitch_stats)),
+  tar_target(main_effects_LMPP, plot_main_effect(pitch_stats, dv = "LMPP")),
   tar_target(intonation_model_single, get_intonation_model_single(pitch_stats)),
   tar_target(intonation_model_inner, get_intonation_model_inner_voice(pitch_stats_inner))
   

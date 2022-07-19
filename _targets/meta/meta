@@ -1,63 +1,76 @@
-name|type|data|command|depend|seed|path|time|size|bytes|format|iteration|parent|children|seconds|warnings|error
-data_9e88fe5a|branch|8c63d14de0088632|e37c7fbd2c993917|6e8f10d520f7bf14|-1864581414||t19066.92399882s|e2350a9b03eb3054|34762|feather|vector|data||0.28||
-data_c38962f4|branch|e7f5105d3d80fec5|e37c7fbd2c993917|5a0a9768655d7913|29957395||t19066.9240005861s|4413e91c609b4082|34738|feather|vector|data||0.08||
-data_593c6229|branch|3e8aa813a7cc1fe5|e37c7fbd2c993917|2eb7d42fc8ac4831|-1277006603||t19066.9240019642s|8ef40c46ad3516e5|36370|feather|vector|data||0.11||
-data_7adb9978|branch|b13d42e826fb7403|e37c7fbd2c993917|d8c9064c3e6215fc|886847216||t19066.9257055479s|4413e91c609b4082|34738|feather|vector|data||0.23||
-data_18345d6e|branch|9edf6a82fc576177|e37c7fbd2c993917|2c4b0e8bf9e37e08|119485247||t19066.9268854145s|e2350a9b03eb3054|34762|feather|vector|data||0.28||
-w|stem|929b0f3232055d4b|5bd75330daadf7d5|a3dad144c40657ed|1486926112||t19066.9301435853s|82c1d84d4f45bcb8|56|rds|vector|||0||
-x|stem|0a96ac81f6477375|3fa777833973851a|a3dad144c40657ed|-1828477467||t19066.9301440265s|82c1d84d4f45bcb8|56|rds|vector|||0||
-y_d19f6203|branch|d4aafdac4ebee6b5|c3a4b4b13b6ba065|bae430a1e763f4be|-807411006||t19066.9305429037s|7593c903cc1c2e97|52|rds|vector|y||1.16|Paket forcats wurde unter R Version 3.6.3 erstellt|
-y_ce522453|branch|f59988930a3e2b94|c3a4b4b13b6ba065|a1d80146986e205f|-8504069||t19066.930543057s|7593c903cc1c2e97|52|rds|vector|y||0||
-y|stem|3aaf7ec4411fc35e|c3a4b4b13b6ba065|1cc043eddd28a80d|-2137718520||t19066.9314285684s|82c1d84d4f45bcb8|56|rds|vector|||1.13|Paket forcats wurde unter R Version 3.6.3 erstellt|
-data_dir|stem|f362de03df3b496c|db99bee012f69e6e|ef46db3751d8e999|-519216141||t19066.933081606s|1f9515807f9af984|69|rds|vector||data_dir_01400ff0|1.15|Paket forcats wurde unter R Version 3.6.3 erstellt|
-file_list_2ff79098|branch|f47a05d0e0bf51ad|881a4bed17d02669|c369f38dc63629b8|1649442397||t19066.9330819518s|5ccb3d41d74b2974|116|rds|vector|file_list||0||
-data_67ede66f|branch|520f6b4b67369b3b|e37c7fbd2c993917|48924fbcff198477|352820637||t19066.9330882037s|43bf8c779e420104|87866|feather|vector|data||0.36||
-file_list|stem|655a35e773f73544|881a4bed17d02669|7dc1214199b3b8ff|149261240||t19066.9388082953s|dc6150ff0244dbb7|99|rds|vector||file_list_2380522d*file_list_edfeb9cf*file_list_a3ce07a1|1.12|Paket forcats wurde unter R Version 3.6.3 erstellt|
-metadata_from_fname|function|e33917911e223824||||||||||||||
-pitch_check_plot|stem|e485dc501a5af615|93a7b3784b3312aa|8c9d5a8acebf3deb|2028494730||t19067.6886334222s||260609|rds|vector|||0.55|replacing previous import purrrtranspose by tabrtranspose when loading parkR|Objekt pc_labels_flat nicht gefunden
-score_dir|stem|3c28795d0eee1906|a87c1a77a4470d32|ef46db3751d8e999|818116097||t19185.9254497198s|98bde5196c354f79|70|rds|vector|||0||
-data_index|stem|d975303603e4eb2a|2431fb0033d10ce9|ef46db3751d8e999|1593745427|data/metadata/note_track_idx.rds|t19189.6905300226s|39fe15a85e5b497c|2130|file|vector|||1.09|Paket forcats wurde unter R Version 3.6.3 erstellt|
-end_to_end_diff|function|18e6df961716b388||||||||||||||
-track_info_path|stem|7632aea6248cfb99|1da431dfbf7d015f|ef46db3751d8e999|252128440|data/metadata/track_coding.xlsx|t19189.6905300226s|cf851d3509e56988|15057|file|vector|||2.03|Paket forcats wurde unter R Version 3.6.3 erstellt|
-preprocessing|function|23bc3c2dae3b7ed5||||||||||||||
-track_info|stem|7f98f6ce5a82e953|1cb48cb6e1d711f5|c0a5fe493441f911|-295957070||t19191.6870523075s|b283f10afa8d64b1|311|rds|vector|||1.11|Paket forcats wurde unter R Version 3.6.3 erstellt|
-note_tracks|stem|b719a98ae0ea5bee|1273d7f83a575c48|77c52d8f07156e41|-1799183516||t19191.7272277935s|e50448c8ccffbbe8|2352643|rds|vector|||12.98|34 parsing failures.row col  expected    actual                                 file  1   5 columns 3 columns datanote_tracksm3_take28_hs6.csv  2   5 columns 3 columns datanote_tracksm3_take28_hs6.csv  3   5 columns 3 columns datanote_tracksm3_take28_hs6.csv  4   5 columns 3 columns datanote_tracksm3_take28_hs6.csv  5   5 columns 3 columns datanote_tracksm3_take28_hs6.csv... ... ......... ......... ....................................See problems... for more details.|
-retune_all|function|fcde51e60eef1b0d||||||||||||||
-scores|stem|a2f40015fd156c25|f1892a58e9111ed6|bab3d665fb9dea27|-1359168496||t19191.7283550555s|dcf1c9836477d556|13912|rds|vector|||1.63|Paket forcats wurde unter R Version 3.6.3 erstellt|
-data|stem|772cdb3bfae40ab2|cc0367f6cd1864fc|2998431fed27bd50|1588979285||t19191.7283685793s|0331a7c7344fffb8|2845145|rds|vector|||0.42||
-data_red|stem|0251b74b0e871a78|fdd312f1ce7f6161|a5d09836bafc8ada|796550064||t19191.728390824s|779b5c9d8851d0bb|3322677|rds|vector|||1.33||
-pitch_stats|stem|21e4a241ecd5b08c|f99c2a2818d7740c|a156119d2f942e9c|576296579||t19191.7283917395s|4f522ea140d99e9e|22248|rds|vector|||0.05||
-pitch_stats_inner|stem|6ca5556a6326ec78|074982bc59642d53|dfa9c25925d955b4|-1497634659||t19191.7283925693s|9a2f097ef89d02c7|11548|rds|vector|||0.06||
-intonation_model_inner_voice|function|9ca2ad7cc3dd347b||||||||||||||
-voices|object|f5846fd49a6599f8||||||||||||||
-hz_to_midi|function|5036e53b21c8d15f||||||||||||||
-integer_deviation|function|44f3264ae6286046||||||||||||||
-messagef|function|be176c6e417e8f87||||||||||||||
-end_to_start_diff|function|18e6df961716b388||||||||||||||
-read_track_info|function|9e52e8bcf2348411||||||||||||||
-pieces|object|f2c45b0da20beeff||||||||||||||
-annotate_note_tracks|function|aff8c8ff03aa0851||||||||||||||
-list_csv_files|function|0315c6f8a6c68eab||||||||||||||
-pitch_ridge_plot|function|48daf1e810ca9e04||||||||||||||
-get_pitch_stats|function|060b16fca66ce9f4||||||||||||||
-remove_linear_trend|function|3360077f26167192||||||||||||||
-sig_stars|function|82223685874d896e||||||||||||||
-get_vertical_indicators|function|4f801cb6e0f4ef6b||||||||||||||
-get_pitch_stats_inner_voice|function|5f7a55a94a3f9fdf||||||||||||||
-midi_to_hz|function|9b6bbeeee6fe8f79||||||||||||||
-find_global_tuning_offset|function|434712c18f78e86d||||||||||||||
-get_synchrony_indicators|function|375cba1822daa7b7||||||||||||||
-get_linear_trend|function|53196b1d3dfbd3f1||||||||||||||
-score_metadata_from_fname|function|46edc3a2a1204562||||||||||||||
-note_track_metadata_from_fname|function|7fdd97180a9f29c2||||||||||||||
-remove_all_linear_trends|function|90a1aa6164ffe012||||||||||||||
-make_nice_lmer|function|4a8fe9e6f555ca0e||||||||||||||
-hz_to_cents|function|7a22beb56ff18c7d||||||||||||||
-analyze_drift_and_tuning|function|5174af16cd91ab50||||||||||||||
-read_score_files|function|6696b3b12e7c5629||||||||||||||
-read_note_tracks_by_list|function|e9fd1d4ceb1b1615||||||||||||||
-get_intonation_model_inner_voice|function|9ca2ad7cc3dd347b||||||||||||||
-get_intonation_model_single|function|96beb64a8d8e43b3||||||||||||||
-read_note_tracks|function|a84ccd81fb273a91||||||||||||||
-intonation_model_single|stem|f8ec2dc3306e236e|52b6ba96dc68eb4f|6adc550931c16ac9|-1373880664||t19191.7853143627s|9f0ae539276a7c3b|959|rds|vector|||2.77|Paket forcats wurde unter R Version 3.6.3 erstellt|
-intonation_model_inner|stem|13114aa803d4d762|6fc9778eca9af229|7cad4ae7b552a38b|-810358624||t19191.7853188754s|ff60ee15cc471bdd|954|rds|vector|||0.38||
+name|type|data|command|depend|seed|path|time|size|bytes|format|repository|iteration|parent|children|seconds|warnings|error
+analyze_drift_and_tuning|function|5174af16cd91ab50|||||||||||||||
+annotate_note_tracks|function|aff8c8ff03aa0851|||||||||||||||
+bootstrap_lm|function|82e828b2e9919d16|||||||||||||||
+check_main_effects|function|8264358dd926a6c3|||||||||||||||
+data|stem|72de3b7a7e76db75|cc0367f6cd1864fc|33bcbfd26253bf06|1588979285||t19192.4616744162s|e34230a1a9814f0c|2845143|rds|local|vector|||0.6||
+data_18345d6e|branch|9edf6a82fc576177|e37c7fbd2c993917|2c4b0e8bf9e37e08|119485247||t19066.9268854145s|e2350a9b03eb3054|34762|feather|local|vector|data||0.28||
+data_593c6229|branch|3e8aa813a7cc1fe5|e37c7fbd2c993917|2eb7d42fc8ac4831|-1277006603||t19066.9240019642s|8ef40c46ad3516e5|36370|feather|local|vector|data||0.11||
+data_67ede66f|branch|520f6b4b67369b3b|e37c7fbd2c993917|48924fbcff198477|352820637||t19066.9330882037s|43bf8c779e420104|87866|feather|local|vector|data||0.36||
+data_7adb9978|branch|b13d42e826fb7403|e37c7fbd2c993917|d8c9064c3e6215fc|886847216||t19066.9257055479s|4413e91c609b4082|34738|feather|local|vector|data||0.23||
+data_9e88fe5a|branch|8c63d14de0088632|e37c7fbd2c993917|6e8f10d520f7bf14|-1864581414||t19066.92399882s|e2350a9b03eb3054|34762|feather|local|vector|data||0.28||
+data_c38962f4|branch|e7f5105d3d80fec5|e37c7fbd2c993917|5a0a9768655d7913|29957395||t19066.9240005861s|4413e91c609b4082|34738|feather|local|vector|data||0.08||
+data_dir|stem|e123f7808eea6a4c|db99bee012f69e6e|ef46db3751d8e999|-519216141||t19192.3434613021s|316cc09d68060f29|67|rds|local|vector|||2|Paket hms wurde unter R Version 4.0.5 erstellt. Paket tidyverse wurde unter R Version 4.0.5 erstellt. Paket tidyr wurde unter R Version 4.0.5 erstellt. Paket readr wurde unter R Version 4.0.5 erstellt|
+data_index|stem|d975303603e4eb2a|2431fb0033d10ce9|ef46db3751d8e999|1593745427|data/metadata/note_track_idx.rds|t19192.3387703362s|39fe15a85e5b497c|2130|file|local|vector|||1.09|Paket forcats wurde unter R Version 3.6.3 erstellt|
+data_red|stem|3f66fbed51d0a7d5|fdd312f1ce7f6161|e0ca5cdb0e4605c9|796550064||t19192.4617109859s|f43ec406dcfcb437|3322671|rds|local|vector|||2.32||
+end_to_end_diff|function|18e6df961716b388|||||||||||||||
+end_to_start_diff|function|18e6df961716b388|||||||||||||||
+file_list|stem|3090fbb86f87f1e5|881a4bed17d02669|77489c026df11045|149261240||t19192.3560686431s|dab6f9a5d8c2d31f|2095|rds|local|vector|||0||
+file_list_2ff79098|branch|f47a05d0e0bf51ad|881a4bed17d02669|c369f38dc63629b8|1649442397||t19066.9330819518s|5ccb3d41d74b2974|116|rds|local|vector|file_list||0||
+find_global_tuning_offset|function|434712c18f78e86d|||||||||||||||
+get_bootstrap_sample|function|707a5b73ea55681c|||||||||||||||
+get_intonation_model_inner_voice|function|14a76be8999ce410|||||||||||||||
+get_intonation_model_single|function|b001a1950e86b919|||||||||||||||
+get_linear_trend|function|53196b1d3dfbd3f1|||||||||||||||
+get_lmer_model|function|a4d3a3771cc1933a|||||||||||||||
+get_permutation|function|ebaa03fd098290c3|||||||||||||||
+get_permutation_tests|function|3dfcadc3c464f395|||||||||||||||
+get_pitch_stats|function|060b16fca66ce9f4|||||||||||||||
+get_pitch_stats_inner_voice|function|e83cda3a329b8c4b|||||||||||||||
+get_synchrony_indicators|function|766e1a751e676f9c|||||||||||||||
+get_vertical_indicators|function|69ac8d81c77e2c4c|||||||||||||||
+get_vertical_models|function|1ee289e1fbab75ce|||||||||||||||
+hz_to_cents|function|7a22beb56ff18c7d|||||||||||||||
+hz_to_midi|function|5036e53b21c8d15f|||||||||||||||
+integer_deviation|function|44f3264ae6286046|||||||||||||||
+intonation_model_inner|stem|53f7e730d2d85a9d|6fc9778eca9af229|8fc63bcd880a323d|-810358624||t19192.4617555958s|2336b14cce37cc23|398|rds|local|vector|||0.5||
+intonation_model_inner_voice|function|9ca2ad7cc3dd347b|||||||||||||||
+intonation_model_single|stem|dc03914eb6aa2e30|52b6ba96dc68eb4f|b9ec757c66ba0f1c|-1373880664||t19192.4617372832s|18b57449a454a2df|407|rds|local|vector|||1.98||
+list_csv_files|function|0315c6f8a6c68eab|||||||||||||||
+main_effects|stem|cd9a3ba284275798|4a7a183f141e1c42|746066e4a2ea1ae3|-1259676851||t19192.4617496247s|de9354372b5a5363|563|rds|local|vector|||0.75||
+main_effects_LMAPE|stem|2f6e222303d343c3|cf0f13f270dd460e|f45b7b25db495f39|869268697||t19192.4617407133s|31cdbb6a52f0d820|135089|rds|local|vector|||0.03||
+main_effects_LMPAE|stem|2f6e222303d343c3|cf0f13f270dd460e|f45b7b25db495f39|-2055729302||t19192.4461068976s|31cdbb6a52f0d820|135089|rds|local|vector|||0.01||
+main_effects_LMPP|stem|9407e4d13371b5e7|66743d9711d8ebac|f45b7b25db495f39|898802077||t19192.4617390049s|c7c8d60538cdf20c|135209|rds|local|vector|||0.05||
+main_effects_LMPPP|stem|9407e4d13371b5e7|66743d9711d8ebac|f45b7b25db495f39|216754551||t19192.4461055461s|c7c8d60538cdf20c|135209|rds|local|vector|||0.05||
+make_nice_lmer|function|b175fda3ac586945|||||||||||||||
+messagef|function|be176c6e417e8f87|||||||||||||||
+metadata_from_fname|function|e33917911e223824|||||||||||||||
+midi_to_hz|function|9b6bbeeee6fe8f79|||||||||||||||
+note_track_metadata_from_fname|function|7fdd97180a9f29c2|||||||||||||||
+note_tracks|stem|358ceefeac5173a4|1273d7f83a575c48|4509d8df0013a409|-1799183516||t19192.461657574s|c0b3c873446777c6|2352635|rds|local|vector|||29.81||
+pieces|object|f2c45b0da20beeff|||||||||||||||
+pitch_check_plot|stem|e485dc501a5af615|93a7b3784b3312aa|8c9d5a8acebf3deb|2028494730||t19067.6886334222s||260609|rds|local|vector|||0.55|replacing previous import purrrtranspose by tabrtranspose when loading parkR|Objekt pc_labels_flat nicht gefunden
+pitch_ridge_plot|function|48daf1e810ca9e04|||||||||||||||
+pitch_stats|stem|9e692e1103990232|f99c2a2818d7740c|8c36fd87a5fd3a5e|576296579||t19192.4617123481s|77d5c302c02f1d71|22245|rds|local|vector|||0.08||
+pitch_stats_inner|stem|e5e5414a45c98271|074982bc59642d53|43dcc505e5e78750|-1497634659||t19192.4617141719s|9a2f097ef89d02c7|11548|rds|local|vector|||0.14||
+plot_main_effect|function|93e95ee2157ce0c0|||||||||||||||
+preprocessing|function|23bc3c2dae3b7ed5|||||||||||||||
+read_note_tracks|function|ebfe6ae88d8b0ddd|||||||||||||||
+read_note_tracks_by_list|function|d963b55fa59380be|||||||||||||||
+read_score_files|function|6696b3b12e7c5629|||||||||||||||
+read_track_info|function|9e52e8bcf2348411|||||||||||||||
+remove_all_linear_trends|function|90a1aa6164ffe012|||||||||||||||
+remove_linear_trend|function|3360077f26167192|||||||||||||||
+retune_all|function|fcde51e60eef1b0d|||||||||||||||
+score_dir|stem|f701ebde6724cdfb|a87c1a77a4470d32|ef46db3751d8e999|818116097||t19192.3434617291s|316cc09d68060f29|67|rds|local|vector|||0||
+score_metadata_from_fname|function|46edc3a2a1204562|||||||||||||||
+scores|stem|9331e95c7dfa259f|f1892a58e9111ed6|795b24dd77dcd6bc|-1359168496||t19192.3560809713s|8f3ac8193d1b863d|13734|rds|local|vector|||0.98||
+sig_stars|function|82223685874d896e|||||||||||||||
+track_info|stem|587333c78d3ba0be|1cb48cb6e1d711f5|c0a5fe493441f911|-295957070||t19192.3560692302s|b283f10afa8d64b1|311|rds|local|vector|||0.03||
+track_info_path|stem|7632aea6248cfb99|1da431dfbf7d015f|ef46db3751d8e999|252128440|data/metadata/track_coding.xlsx|t19192.3387703478s|cf851d3509e56988|15057|file|local|vector|||2.03|Paket forcats wurde unter R Version 3.6.3 erstellt|
+voices|object|f5846fd49a6599f8|||||||||||||||
+w|stem|929b0f3232055d4b|5bd75330daadf7d5|a3dad144c40657ed|1486926112||t19066.9301435853s|82c1d84d4f45bcb8|56|rds|local|vector|||0||
+x|stem|0a96ac81f6477375|3fa777833973851a|a3dad144c40657ed|-1828477467||t19066.9301440265s|82c1d84d4f45bcb8|56|rds|local|vector|||0||
+y|stem|3aaf7ec4411fc35e|c3a4b4b13b6ba065|1cc043eddd28a80d|-2137718520||t19066.9314285684s|82c1d84d4f45bcb8|56|rds|local|vector|||1.13|Paket forcats wurde unter R Version 3.6.3 erstellt|
+y_ce522453|branch|f59988930a3e2b94|c3a4b4b13b6ba065|a1d80146986e205f|-8504069||t19066.930543057s|7593c903cc1c2e97|52|rds|local|vector|y||0||
+y_d19f6203|branch|d4aafdac4ebee6b5|c3a4b4b13b6ba065|bae430a1e763f4be|-807411006||t19066.9305429037s|7593c903cc1c2e97|52|rds|local|vector|y||1.16|Paket forcats wurde unter R Version 3.6.3 erstellt|
