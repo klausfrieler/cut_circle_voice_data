@@ -98,13 +98,13 @@ read_note_tracks_by_list <- function(file_list){
            voice_type = factor(voice_type, levels = c("sopran", "alt", "tenor", "bass")),           
            note_id = sprintf("%s:%s", id, note_label)) %>% 
     select(pos, onset, onset_hms, pitch, pitch_hz, ioi, int = int_midi, everything() ) 
+  browser()
   ret[is.na(ret$repetition),]$repetition <- 1
   ret[is.na(ret$pos_spec), ]$pos_spec <- ""
   ret <- ret %>% 
     mutate(piece_take = sprintf("%s:%s:r%d", take, piece, repetition),
            error = as.integer(pos_spec %in% c("n", "x", "~")))  
 
-  #browser()
   
   assign("outliers", outliers, globalenv())
   ret
@@ -156,8 +156,9 @@ annotate_note_tracks <- function(note_tracks, scores, track_info){
     note_tracks %>% 
     left_join(scores %>% select(-id), by = c("piece", "voice_type", "note_label")) %>% 
     filter(!is.na(pos),  pos_spec != "~", pos_spec != "x", pos_spec != "n", pos_spec != "g") %>% 
-    mutate(d_pitch = pitch - nom_pitch)
-  print(str(ret$voice_type))
+    mutate(d_pitch = pitch - nom_pitch) %>% 
+    select(-error)
+
   ret  <- ret %>% left_join(track_info, by = "take") %>% mutate(day = sprintf("day-%d", day))
   
   sync_points <- scores %>% 
@@ -437,6 +438,7 @@ get_vertical_indicators <- function(pitch_data){
               .groups = "drop") 
   indicators
 }
+
 get_vertical_models <- function(vertical_indicators){
   model.lmape  <- vertical_indicators %>% 
     lmerTest::lmer(LMAPE ~ condition + (1|piece) + (1|day), data = .)
@@ -445,4 +447,36 @@ get_vertical_models <- function(vertical_indicators){
   bind_rows(make_nice_lmer(model.lmape, "VERT_LMAPE"), 
             make_nice_lmer(model.lmop, "VERT_LMOP"))
   
+}
+
+get_singing_errors <- function(note_tracks, note_tracks_annotated){
+  tmp <- note_tracks %>%
+    left_join(note_tracks_annotated %>% 
+                distinct(piece_take, headset, condition, piece, repetition, day), 
+              by = c("piece_take", "headset", "piece", "repetition")) %>% 
+    filter(!is.na(pos))
+  
+  error_log <- 
+    lme4::glmer(error ~ condition + (1|piece) + (1|headset) +(1|day), 
+                family = binomial, 
+                data = tmp )
+  
+  error_log %>% 
+    make_nice_lmer(DV = "error") %>% 
+    filter(effect == "fixed") %>% 
+    select(term, DV, estimate, p_val_str, R2_conditional, R2_marginal) 
+}
+
+plot_error_rates <- function(note_tracks, note_tracks_annotated){
+  tmp <- note_tracks %>%
+    left_join(note_tracks_annotated %>% 
+                distinct(piece_take, headset, condition, piece, repetition, day), 
+              by = c("piece_take", "headset", "piece", "repetition")) %>% 
+    filter(!is.na(pos)) %>% 
+    group_by(condition, piece, day, headset) %>% 
+    summarise(error_rate = mean(error),
+              NLER = -log(error_rate),
+              .groups = "drop")
+  plot_main_effect(tmp, dv = "NLER")
+    
 }
