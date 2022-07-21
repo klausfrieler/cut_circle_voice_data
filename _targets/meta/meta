@@ -3,7 +3,7 @@ analyze_drift_and_tuning|function|5174af16cd91ab50|||||||||||||||
 annotate_note_tracks|function|ac187434a6c2f697|||||||||||||||
 bootstrap_lm|function|82e828b2e9919d16|||||||||||||||
 check_main_effects|function|8264358dd926a6c3|||||||||||||||
-clean_note_tracks|stem|5a8790578bb507f4|3f0ccea9cfd686d6|7f3aee8884fe0db4|-1731588585||t19192.6442032557s|9cd9674147181fc9|3321812|rds|local|vector|||1.31||
+clean_note_tracks|stem|915783b1ba4dcd10|3f0ccea9cfd686d6|5488018a1bf05b29|-1731588585||t19193.4866652898s|d4337031cd44fa6d|3324622|rds|local|vector|||1.44||
 data|stem|2bba94d3d398f5bc|cc0367f6cd1864fc|21312ea9a7912a93|1588979285||t19192.6379570636s|996152cdb4743241|2843676|rds|local|vector|||0.4||
 data_18345d6e|branch|9edf6a82fc576177|e37c7fbd2c993917|2c4b0e8bf9e37e08|119485247||t19066.9268854145s|e2350a9b03eb3054|34762|feather|local|vector|data||0.28||
 data_593c6229|branch|3e8aa813a7cc1fe5|e37c7fbd2c993917|2eb7d42fc8ac4831|-1277006603||t19066.9240019642s|8ef40c46ad3516e5|36370|feather|local|vector|data||0.11||
@@ -19,7 +19,9 @@ end_to_start_diff|function|18e6df961716b388|||||||||||||||
 file_list|stem|726bc7a9d95da0a9|881a4bed17d02669|7dc1214199b3b8ff|149261240||t19192.6282584955s|dab6f9a5d8c2d31f|2095|rds|local|vector|||0||
 file_list_2ff79098|branch|f47a05d0e0bf51ad|881a4bed17d02669|c369f38dc63629b8|1649442397||t19066.9330819518s|5ccb3d41d74b2974|116|rds|local|vector|file_list||0||
 find_global_tuning_offset|function|434712c18f78e86d|||||||||||||||
+find_snippet|function|1bf8554197ca24c2|||||||||||||||
 get_bootstrap_sample|function|707a5b73ea55681c|||||||||||||||
+get_cc|function|ec34dd633dd2c63f|||||||||||||||
 get_intonation_model_inner_voice|function|14a76be8999ce410|||||||||||||||
 get_intonation_model_single|function|b001a1950e86b919|||||||||||||||
 get_linear_trend|function|53196b1d3dfbd3f1|||||||||||||||
@@ -35,33 +37,34 @@ get_vertical_models|function|1ee289e1fbab75ce|||||||||||||||
 hz_to_cents|function|7a22beb56ff18c7d|||||||||||||||
 hz_to_midi|function|5036e53b21c8d15f|||||||||||||||
 integer_deviation|function|44f3264ae6286046|||||||||||||||
-intonation_model_inner|stem|eccf7229720fa29f|6fc9778eca9af229|95182bbbc4efc470|-810358624||t19192.6283415624s|7a2614ea6de8caec|400|rds|local|vector|||0.36||
+intonation_model_inner|stem|77356ec494edd8ae|6fc9778eca9af229|0dae6f7daae46a16|-810358624||t19193.4871589495s|ae57f8f85db7130e|399|rds|local|vector|||0.45|Cant compute random effect variances. Some variance components equal zero. Your  model may suffer from singulariy.  Solution Respecify random structure You may also decrease the tolerance  level to enforce the calculation of random effect variances.|
 intonation_model_inner_voice|function|9ca2ad7cc3dd347b|||||||||||||||
-intonation_model_single|stem|a473aa3813cd2955|52b6ba96dc68eb4f|bd8fa61d1b706be7|-1373880664||t19192.6283269471s|fed3a01e58582d1f|410|rds|local|vector|||1.64||
+intonation_model_single|stem|31fa466474adcf86|52b6ba96dc68eb4f|4d7480a15aa92640|-1373880664||t19193.487141831s|50a47a067a0289c7|411|rds|local|vector|||0.55||
 list_csv_files|function|0315c6f8a6c68eab|||||||||||||||
-main_effects|stem|4e3563adee2d1473|4a7a183f141e1c42|ea3acca2a6287800|-1259676851||t19192.6283373826s|36b2dcd74c0237cc|565|rds|local|vector|||0.69||
-main_effects_error|stem|7bdf64a6238f26c8|fc5fe3edc9304667|fff5fabb8889407b|-2100286639||t19192.6668559558s|b6ae87a524338677|99806|rds|local|vector|||0.25||
-main_effects_LMAPE|stem|b8d087d57a52dde4|cf0f13f270dd460e|18b880be2ce03743|869268697||t19192.6283292779s|1326801fdebbb756|135185|rds|local|vector|||0.01||
+main_effects|stem|e80c067432515606|4a7a183f141e1c42|59454b9b23b9d21d|-1259676851||t19193.4871534441s|9ad2c7ac1f5e3490|574|rds|local|vector|||0.82||
+main_effects_error|stem|cb9d779d6467bdf2|fc5fe3edc9304667|25cd8bbea5ad3698|-2100286639||t19194.3574464414s|d2bcbea1a71b1b58|99369|rds|local|vector|||0.22||
+main_effects_LMAPE|stem|bf96c6af20ad10fb|cf0f13f270dd460e|e301611f89a1998a|869268697||t19193.4871438279s|ebaf1ef2fd91bb54|135280|rds|local|vector|||0.02||
 main_effects_LMPAE|stem|2f6e222303d343c3|cf0f13f270dd460e|f45b7b25db495f39|-2055729302||t19192.4461068976s|31cdbb6a52f0d820|135089|rds|local|vector|||0.01||
-main_effects_LMPP|stem|2c905489a5c509b5|66743d9711d8ebac|18b880be2ce03743|898802077||t19192.6283282745s|94a6909702a07b9e|135306|rds|local|vector|||0.04||
+main_effects_LMPP|stem|180e772071bea80b|66743d9711d8ebac|e301611f89a1998a|898802077||t19193.4871427664s|b08c8c9c1577ea28|135448|rds|local|vector|||0.03||
 main_effects_LMPPP|stem|9407e4d13371b5e7|66743d9711d8ebac|f45b7b25db495f39|216754551||t19192.4461055461s|c7c8d60538cdf20c|135209|rds|local|vector|||0.05||
 make_nice_lmer|function|b175fda3ac586945|||||||||||||||
 messagef|function|be176c6e417e8f87|||||||||||||||
 metadata_from_fname|function|e33917911e223824|||||||||||||||
 midi_to_hz|function|9b6bbeeee6fe8f79|||||||||||||||
 note_track_metadata_from_fname|function|7fdd97180a9f29c2|||||||||||||||
-note_tracks|stem|b719a98ae0ea5bee|1273d7f83a575c48|04f638ca7a53a146|-1799183516||t19192.6379455598s|e50448c8ccffbbe8|2352643|rds|local|vector|||12.25|114 parsing failures.row col  expected    actual                                   file  1   5 columns 3 columns datanote_tracksa22_take21_hs8.csv  2   5 columns 3 columns datanote_tracksa22_take21_hs8.csv  3   5 columns 3 columns datanote_tracksa22_take21_hs8.csv  4   5 columns 3 columns datanote_tracksa22_take21_hs8.csv  5   5 columns 3 columns datanote_tracksa22_take21_hs8.csv... ... ......... ......... ......................................See problems... for more details.. 34 parsing failures.row col  expected    actual                                 file  1   5 columns 3 columns datanote_tracksm3_take28_hs6.csv  2   5 columns 3 columns datanote_tracksm3_take28_hs6.csv  3   5 columns 3 columns datanote_tracksm3_take28_hs6.csv  4   5 columns 3 columns datanote_tracksm3_take28_hs6.csv  5   5 columns 3 columns datanote_tracksm3_take28_hs6.csv... ... ......... ......... ....................................See problems... for more details.|
-note_tracks_annotated|stem|2bba94d3d398f5bc|cc0367f6cd1864fc|21312ea9a7912a93|-1710751380||t19192.644181264s|996152cdb4743241|2843676|rds|local|vector|||0.39||
+note_tracks|stem|649a624c62391e68|1273d7f83a575c48|c52243d7ee4bd72a|-1799183516||t19193.4866263625s|349f5a2b643dae73|2347074|rds|local|vector|||17.83||
+note_tracks_annotated|stem|bcc8a6f5ceb9bcd1|cc0367f6cd1864fc|dd8643134e59212a|-1710751380||t19193.4866393728s|725336ba500d622c|2845816|rds|local|vector|||0.39||
+pad_to_next_power_of_two|function|24bad83828717e98|||||||||||||||
 pieces|object|f2c45b0da20beeff|||||||||||||||
 pitch_check_plot|stem|e485dc501a5af615|93a7b3784b3312aa|8c9d5a8acebf3deb|2028494730||t19067.6886334222s||260609|rds|local|vector|||0.55|replacing previous import purrrtranspose by tabrtranspose when loading parkR|Objekt pc_labels_flat nicht gefunden
 pitch_ridge_plot|function|48daf1e810ca9e04|||||||||||||||
-pitch_stats|stem|21e4a241ecd5b08c|e1fe2f3529d0c382|0b7b91657189cc16|576296579||t19192.6673102261s|4f522ea140d99e9e|22248|rds|local|vector|||0.08||
-pitch_stats_inner|stem|6ca5556a6326ec78|65f4d21a2e4225ce|80aae2df90e77708|-1497634659||t19192.6673115984s|9a2f097ef89d02c7|11548|rds|local|vector|||0.08||
-plot_error_rates|function|9fdf1f9df3cf8959|||||||||||||||
+pitch_stats|stem|06a8637571671b1c|e1fe2f3529d0c382|0ddb5d5e842d1b6b|576296579||t19193.4871345644s|768f6b953af0fe3a|22303|rds|local|vector|||0.05||
+pitch_stats_inner|stem|3952d5c78287aaab|65f4d21a2e4225ce|97d9906352718e8b|-1497634659||t19193.4871353844s|a9ef3726f33f2d46|11595|rds|local|vector|||0.06||
+plot_error_rates|function|4aa936ab3b4d3db4|||||||||||||||
 plot_main_effect|function|cc4ec2086f5d8491|||||||||||||||
 preprocessing|function|23bc3c2dae3b7ed5|||||||||||||||
-read_note_tracks|function|d516a6d05633018f|||||||||||||||
-read_note_tracks_by_list|function|3782ef4329cec94b|||||||||||||||
+read_note_tracks|function|ebfe6ae88d8b0ddd|||||||||||||||
+read_note_tracks_by_list|function|d963b55fa59380be|||||||||||||||
 read_score_files|function|6696b3b12e7c5629|||||||||||||||
 read_track_info|function|9e52e8bcf2348411|||||||||||||||
 remove_all_linear_trends|function|90a1aa6164ffe012|||||||||||||||
@@ -71,9 +74,9 @@ score_dir|stem|3c28795d0eee1906|a87c1a77a4470d32|ef46db3751d8e999|818116097||t19
 score_metadata_from_fname|function|46edc3a2a1204562|||||||||||||||
 scores|stem|a2f40015fd156c25|f1892a58e9111ed6|bab3d665fb9dea27|-1359168496||t19192.6282705242s|dcf1c9836477d556|13912|rds|local|vector|||0.94||
 sig_stars|function|82223685874d896e|||||||||||||||
-singing_error_model|stem|5c8a7cbaf9b7086c|edf5d6b855181b05|b6fcf312d3dbd0ac|1377341015||t19192.6673047277s|df4a46d8aae84355|306|rds|local|vector|||38.75||
+singing_error_model|stem|6c39e16d61983c9f|edf5d6b855181b05|468127f8798959b7|1377341015||t19193.487133664s|df4a46d8aae84355|306|rds|local|vector|||40.39||
 track_info|stem|7f98f6ce5a82e953|1cb48cb6e1d711f5|c0a5fe493441f911|-295957070||t19192.6282595046s|b283f10afa8d64b1|311|rds|local|vector|||0.06||
-track_info_path|stem|7632aea6248cfb99|1da431dfbf7d015f|ef46db3751d8e999|252128440|data/metadata/track_coding.xlsx|t19192.6250697393s|cf851d3509e56988|15057|file|local|vector|||2.03|Paket forcats wurde unter R Version 3.6.3 erstellt|
+track_info_path|stem|7632aea6248cfb99|1da431dfbf7d015f|ef46db3751d8e999|252128440|data/metadata/track_coding.xlsx|t19193.4858493264s|cf851d3509e56988|15057|file|local|vector|||2.03|Paket forcats wurde unter R Version 3.6.3 erstellt|
 voices|object|f5846fd49a6599f8|||||||||||||||
 w|stem|929b0f3232055d4b|5bd75330daadf7d5|a3dad144c40657ed|1486926112||t19066.9301435853s|82c1d84d4f45bcb8|56|rds|local|vector|||0||
 x|stem|0a96ac81f6477375|3fa777833973851a|a3dad144c40657ed|-1828477467||t19066.9301440265s|82c1d84d4f45bcb8|56|rds|local|vector|||0||

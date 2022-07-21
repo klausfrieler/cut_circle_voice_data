@@ -1,0 +1,23 @@
+---
+title: "Cut Circle: Intonation and Synchronization"
+output: html_document
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", echo = FALSE, warnings = FALSE)
+options(tidyverse.quite = T)
+library(targets)
+library(tidyverse)
+
+```
+
+This is a test
+
+```{r test, echo = FALSE}
+tar_read(data_red) %>% 
+  #>distinct(piece, take, condition, headset) %>% 
+  group_by(piece, take, condition) %>% 
+  summarise(number_of_notes = n()) %>% 
+  flextable::flextable()
+```
+

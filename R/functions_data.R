@@ -1,3 +1,4 @@
+library(tidyverse)
 library(readr)
 library(performance)
 library(broom.mixed)
@@ -82,7 +83,6 @@ read_note_tracks_by_list <- function(file_list){
       #browser()
       outliers <<- bind_rows(outliers, 
                              tmp %>% slice(1) %>% mutate(type = "missing_col"))
-      
     }
     tmp
   }) %>% 
@@ -98,8 +98,8 @@ read_note_tracks_by_list <- function(file_list){
            voice_type = factor(voice_type, levels = c("sopran", "alt", "tenor", "bass")),           
            note_id = sprintf("%s:%s", id, note_label)) %>% 
     select(pos, onset, onset_hms, pitch, pitch_hz, ioi, int = int_midi, everything() ) 
-  browser()
-  ret[is.na(ret$repetition),]$repetition <- 1
+
+    ret[is.na(ret$repetition),]$repetition <- 1
   ret[is.na(ret$pos_spec), ]$pos_spec <- ""
   ret <- ret %>% 
     mutate(piece_take = sprintf("%s:%s:r%d", take, piece, repetition),
@@ -468,6 +468,7 @@ get_singing_errors <- function(note_tracks, note_tracks_annotated){
 }
 
 plot_error_rates <- function(note_tracks, note_tracks_annotated){
+  browser()
   tmp <- note_tracks %>%
     left_join(note_tracks_annotated %>% 
                 distinct(piece_take, headset, condition, piece, repetition, day), 
@@ -477,6 +478,85 @@ plot_error_rates <- function(note_tracks, note_tracks_annotated){
     summarise(error_rate = mean(error),
               NLER = -log(error_rate),
               .groups = "drop")
-  plot_main_effect(tmp, dv = "NLER")
+  plot_main_effect(tmp, dv = "error_rate")
     
+}
+
+pad_to_next_power_of_two <- function(x, pad = 0){
+  next_pow2 <- 2^ceiling(log2(length(x)))
+  c(x, rep(pad, next_pow2 - length(x)))
+}
+
+next_power_of_two <- function(x){
+  2^round(log2(x))  
+}
+get_cc <-function(target, query){
+  lc <- length(target)
+  ls <- length(query)
+  size <- lc - ls
+  stopifnot(size >= 0)
+  query <- c(query, rep(0, size))
+  
+  w_target <- scale(target) * e1071::hamming.window(length(target))
+  w_query <- scale(query) * e1071::hamming.window(length(query))
+  
+  corr <- fft(fft(w_target) * Conj(fft(w_query)), inverse = T)
+  corr %>% abs()
+}
+
+find_snippet <- function(container, snippet, max_win_sec = 2, sr = 48000){
+  #browser()
+  max_win_size <- round(sr * max_win_sec) %>% next_power_of_two() %>% as.integer()
+  
+  target <- pad_to_next_power_of_two(container@left)
+  query <- pad_to_next_power_of_two(snippet@left)
+  if(length(query) > max_win_size){
+    query <- query[1:max_win_size]  
+  }
+  else{
+    max_win_size <- length(query)  
+  }
+  lt <- length(target)
+  lq <- length(query)
+  size <- lt - lq
+  stopifnot(size >= 0)
+  max_windows <- 2 * ceiling(lt/max_win_size) %>% as.integer()
+  hop_size <- as.integer(max_win_size / 2)
+  #browser()
+  messagef("Starting snippet find with %d windows of size %d/%.3f and hop size %d/%.3f (target length: %.3f s, query length: %.3f sec)", 
+           max_windows, max_win_size, max_win_size/sr, hop_size, hop_size/sr, lt/sr, lq/sr)
+  map_dfr(seq(0, max_windows - 1), function(i){
+    if(i %% 10 == 0) message(sprintf("Window %d @offset %d", i, hop_size * i))  
+    #browser()
+    t <- target[seq(1, max_win_size) + hop_size * i]
+    cc <- get_cc(t, query)
+    arg_max <- which.max(cc)
+    tibble(window = i, 
+           window_offset = hop_size * i,
+           window_offset_sec = hop_size * i / sr,
+           arg_max =  arg_max, 
+           max_val = cc[arg_max], 
+           total_offset =  window_offset + arg_max, 
+           total_offset_sec = total_offset/sr
+           )
+  }) %>% mutate(is_max = max_val == max(max_val))
+}
+
+read_take_audio <- function(audio_dir = "e:/projects/science/MPIEA/projects/cut_circle_voice_data/audios", 
+                            take = 5, headset = 3){
+  take_dir <- file.path(audio_dir, sprintf("take%02d/hs%d", take, headset))
+  full  <- readWave(file.path(take_dir, sprintf("full/take%02d_hs%d.wav", take, headset)))
+  file_list <- list.files(take_dir, pattern = "*.wav", full.names = T)
+  snippets <- map(file_list, function(fn) readWave(fn))
+  names(snippets) <-  file_list %>% basename() %>% tools::file_path_sans_ext()
+  list(full = full, snippets = snippets)
+}
+
+align_take_snippets <- function(audio_dir = "e:/projects/science/MPIEA/projects/cut_circle_voice_data/audios", 
+                                take = 5, headset = 3, win_size = 20){
+  audios <- read_take_audio(audio_dir, take, headset)
+  take_pos <- map_dfr(names(audios$snippets), function(n){
+    find_snippet(audios$full, 
+                 audios$snippets[[n]], 
+                 max_win_sec = 20) %>% mutate(snippet = n)})
 }
