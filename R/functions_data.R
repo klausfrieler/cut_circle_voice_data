@@ -166,8 +166,8 @@ annotate_note_tracks <- function(note_tracks, scores, track_info, offsets){
     filter(!is.na(pos),  pos_spec != "~", pos_spec != "x", pos_spec != "n", pos_spec != "g") %>% 
     mutate(d_pitch = pitch - nom_pitch) %>% 
     select(-error)
-
   ret  <- ret %>% left_join(track_info, by = "take") %>% mutate(day = sprintf("day-%d", day))
+  browser()
   ret <- ret %>% left_join(offsets %>% 
                              select(offset_sec, 
                                     piece_take, 
@@ -575,7 +575,6 @@ find_snippet2 <- function(container, snippet, sr = 48000, dry_run = F){
     return(tibble(offset = NA, offset_sec = NA))
   }
   tmp <- get_cc(container@left, snippet@left)
-  browser()
   tibble(offset = which.max(tmp) - 1, offset_sec = offset/sr)
 }
 
@@ -656,7 +655,6 @@ read_offsets <- function(data_dir = "data/metadata"){
            voice_no = (headset - 1) %% 2 + 1,
            piece = str_remove(snippet, "_take[0-9]+_hs[0-9]$")) %>% 
     mutate(piece_take = piece_take_from_fname(snippet))
-  browser()
   offsets[offsets$take == 33 & offsets$piece == "a1-1" & offsets$headset == 1, ]$offset <- 0
   offsets[offsets$take == 33 & offsets$piece == "a1-1" & offsets$headset == 1, ]$offset_sec <- 0   
   offsets  %>% arrange(take, headset, offset)
