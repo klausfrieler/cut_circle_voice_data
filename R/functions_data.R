@@ -50,7 +50,11 @@ note_track_metadata_from_fname <- function(fname){
   }) %>% mutate(id = str_remove(basename(fname) %>% tools::file_path_sans_ext(), "x$") )
   
 }
-
+piece_take_from_fname <- function(fname){
+  note_track_metadata_from_fname(fname) %>% 
+    mutate(piece_take = sprintf("%s:%s:r%d", take, piece, repetition)) %>% 
+    pull(piece_take)
+}
 list_csv_files <- function(dir){
   list.files(dir, pattern = ".csv", full.names = T)
 }
@@ -155,7 +159,7 @@ read_track_info <- function(path){
   
 }
 
-annotate_note_tracks <- function(note_tracks, scores, track_info){
+annotate_note_tracks <- function(note_tracks, scores, track_info, offsets){
   ret <- 
     note_tracks %>% 
     left_join(scores %>% select(-id), by = c("piece", "voice_type", "note_label")) %>% 
@@ -164,7 +168,13 @@ annotate_note_tracks <- function(note_tracks, scores, track_info){
     select(-error)
 
   ret  <- ret %>% left_join(track_info, by = "take") %>% mutate(day = sprintf("day-%d", day))
-  
+  ret <- ret %>% left_join(offsets %>% 
+                             select(offset_sec, 
+                                    piece_take, 
+                                    headset) %>% 
+                             mutate(headset = sprintf("hs%d", headset)), 
+                           by = c("piece_take", "headset")) %>% 
+    mutate(real_onset = onset + offset_sec)  
   sync_points <- scores %>% 
     group_by(piece, nom_onset) %>% 
     summarise(sync_point = n() == 4, .groups = "drop") %>% 
@@ -560,8 +570,12 @@ find_snippet <- function(container, snippet, max_win_sec = 2, sr = 48000){
 }
 
 
-find_snippet2 <- function(container, snippet, sr = 48000){
+find_snippet2 <- function(container, snippet, sr = 48000, dry_run = F){
+  if(dry_run){
+    return(tibble(offset = NA, offset_sec = NA))
+  }
   tmp <- get_cc(container@left, snippet@left)
+  browser()
   tibble(offset = which.max(tmp) - 1, offset_sec = offset/sr)
 }
 
@@ -583,7 +597,8 @@ align_all_audios <- function(audio_dir = "audios",
                              days = 1:3,
                              exclude_takes = 9, 
                              headsets = 1:8,
-                             save_dir = "data/metadata"){
+                             save_dir = "data/metadata", 
+                             dry_run = F){
   map_dfr(days, function(n){
     day <- sprintf("day_%d", n)
     takes <- list.files(file.path(audio_dir, day)) %>% str_remove("take_") %>% as.integer()
@@ -592,7 +607,7 @@ align_all_audios <- function(audio_dir = "audios",
         pos <- 
           map_dfr(headsets, function(hs){
             messagef("*** Aligning: Day %d, Take %d, Headset %d ***", n, tk, hs)
-            pos <- align_take_snippets2(audio_dir, day = n, take = tk, headset = hs) %>% 
+            pos <- align_take_snippets2(audio_dir, day = n, take = tk, headset = hs, dry_run = dry_run) %>% 
               mutate(take = tk, headset = hs)
             saveRDS(pos, file = file.path(save_dir, sprintf("take%02d_hs%d_offsets.rds", tk, hs)))
             pos
@@ -607,26 +622,42 @@ align_take_snippets <- function(audio_dir = "audios",
                                 day = 1, 
                                 take = 5, 
                                 headset = 1, 
-                                win_size = 20){
+                                dry_run = F){
   audios <- read_take_audios(audio_dir, day = day, take = take, headset = headset)
   take_pos <- map_dfr(names(audios$snippets), function(n){
     find_snippet2(audios$full, 
-                 audios$snippets[[n]], 
-                 max_win_sec = win_size) %>% 
+                 audios$snippets[[n]],
+                 dry_run = dry_run) %>% 
       mutate(snippet = n)})
 }
 
 align_take_snippets2 <- function(audio_dir = "e:/projects/science/MPIEA/projects/cut_circle_voice_data/audios", 
                                 day = 1, 
                                 take = 5, 
-                                headset = 1){
+                                headset = 1, 
+                                dry_run = F){
+  #browser()
   audios <- read_take_audios(audio_dir, day = day, take = take, headset = headset)
   take_pos <- map_dfr(names(audios$snippets), function(n){
     messagef("    Snippet: %s", n)
       find_snippet2(audios$full, 
-                    audios$snippets[[n]]) %>% 
+                    audios$snippets[[n]], 
+                    dry_run = dry_run) %>% 
         mutate(snippet = n)
     }) %>% arrange(offset)
   fft_cache <<- list()
   take_pos
+}
+
+read_offsets <- function(data_dir = "data/metadata"){
+  fnames <-  list.files(data_dir, "*offsets.rds", full.names = T)  
+  offsets <- fnames[!str_detect(fnames, "hs") & !str_detect(fnames, "all")] %>% map_dfr(~{readRDS(.x)}) %>% 
+    mutate(voice_type = ceiling(headset/2),
+           voice_no = (headset - 1) %% 2 + 1,
+           piece = str_remove(snippet, "_take[0-9]+_hs[0-9]$")) %>% 
+    mutate(piece_take = piece_take_from_fname(snippet))
+  browser()
+  offsets[offsets$take == 33 & offsets$piece == "a1-1" & offsets$headset == 1, ]$offset <- 0
+  offsets[offsets$take == 33 & offsets$piece == "a1-1" & offsets$headset == 1, ]$offset_sec <- 0   
+  offsets  %>% arrange(take, headset, offset)
 }
