@@ -644,6 +644,8 @@ get_all_tukeys <- function(pitch_stats, pitch_stats_inner, onset_stats, onset_st
   bind_rows(
     get_tukeys_lmer(pitch_stats, dv = "LMAPE", ranef = c("piece", "day", "headset")) %>% 
       mutate(type = "intonation_model_LMAPE"),
+    # get_tukeys_lmer(pitch_stats, dv = "MAPE", ranef = c("piece", "day", "headset")) %>% 
+    #   mutate(type = "intonation_model_MAPE"),
     get_tukeys_lmer(pitch_stats, dv = "LMPP", ranef = c("piece", "day", "headset")) %>% 
       mutate(type = "intonation_model_LMPP"),
     get_tukeys_lmer(pitch_stats_inner, dv = "LMAPE", ranef = c("piece", "day", "voice_type")) %>% 
