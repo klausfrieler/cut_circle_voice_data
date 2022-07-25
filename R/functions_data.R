@@ -445,9 +445,11 @@ get_vertical_indicators <- function(pitch_data){
     pitch_data %>% 
     filter(sync)%>% 
     group_by(piece_take, nom_onset, condition, day, piece, repetition) %>%
-    summarise(MOP = sd(onset), 
+    summarise(MOP = sd(real_onset), 
+              MOP2 = sd(real_onset)/sqrt(length(real_onset)),
               MAPE = mean(abs(d_pitch_res)),
               LMOP = -log(MOP),
+              LMOP2 = -log(MOP2),
               LMAPE = -log(MAPE),
               .groups = "drop") 
   indicators
