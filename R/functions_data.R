@@ -89,7 +89,7 @@ read_note_tracks_by_list <- function(file_list){
       bind_cols(note_track_metadata_from_fname(fn)) %>% 
       select(-dummy)
     if(all(is.na(tmp$pos))){
-      browser()
+      #browser()
       outliers <<- bind_rows(outliers, 
                              tmp %>% slice(1) %>% mutate(type = "missing_col"))
     }
@@ -145,7 +145,7 @@ read_score_files <- function(score_dir = "data/note_data_csv", pattern = "*.csv"
       bind_cols(score_metadata_from_fname(fn))
   }) %>% 
     mutate(voice_type = factor(voice_type, levels = c("sopran", "alt", "tenor", "bass")))
-  browser()
+  #browser()
   #Josquins all a whole tone too low?!
   ret[str_detect(ret$piece, "jos"),]$nom_pitch <- ret[str_detect(ret$piece, "jos"),]$nom_pitch - 2 
   ret
@@ -168,7 +168,7 @@ annotate_note_tracks <- function(note_tracks, scores, track_info, offsets){
     mutate(d_pitch = pitch - nom_pitch) %>% 
     select(-error)
   ret  <- ret %>% left_join(track_info, by = "take") %>% mutate(day = sprintf("day-%d", day))
-  browser()
+  #browser()
   ret <- ret %>% left_join(offsets %>% 
                              select(offset_sec, 
                                     piece_take, 
@@ -229,6 +229,28 @@ get_pitch_stats_inner_voice <- function(data){
       MPP  = mean(sd(d_voice, na.rm = T)),
       LMAPE = -log(MAPE),
       LMPP  = -log(MPP), .groups = "drop")
+}
+
+get_onset_stats_inner_voice <- function(data){
+  ret1 <- data %>% 
+    group_by(piece_take, voice_type, nom_onset, piece, condition, day) %>% 
+    summarise(d_onset = abs(diff(real_onset)), .groups = "drop")
+
+  ret2 <- data %>% 
+    select(piece_take, voice_type, voice_no, condition, day, piece, pos, real_onset) %>% 
+    pivot_wider(id_cols = c(piece_take, voice_type, condition, day, piece, pos), 
+                names_from = voice_no, 
+                values_from = real_onset, names_prefix = "voice") %>% 
+    mutate(d_voice = voice2 - voice1)
+  ret2 %>%    
+    group_by(piece_take, day, piece, condition, voice_type) %>% 
+    summarise(
+      MOE = mean(abs(d_voice), na.rm = T),
+      MOP  = mean(sd(d_voice, na.rm = T)),
+      LMOE = -log(MOE),
+      LMOP  = -log(MOP), .groups = "drop") %>% 
+    filter(piece_take != "take21:dufay-agnus2:r2")
+  
 }
 
 remove_all_linear_trends <- function(pitch_data, max_error = 1){
@@ -325,6 +347,7 @@ get_lmer_model <- function(pitch_stats,
     form <- sprintf("%s ~ %s + %s", v, 
                     fixed, 
                     paste(sprintf("(1|%s)", ranef), collapse = " + "))
+    #browser()
     mod <- lmerTest::lmer(form, data = pitch_stats) %>% make_nice_lmer(v)
     if(reduced){
       mod %>% 
@@ -337,6 +360,7 @@ get_lmer_model <- function(pitch_stats,
     
   })
 }
+
 get_bootstrap_sample <- function(data){
   data[sample(1:nrow(data), replace = T),]
 }
@@ -353,10 +377,10 @@ bootstrap_lm <- function(data,
                          type = c("bootstrap", "permutation")){
   type = match.arg(type)      
   map_dfr(dv, function(v1){
-    browser()
+    #browser()
     form <- sprintf("%s ~ %s", v1, paste(iv, collapse = " + ")) %>% as.formula()
     map_dfr(1:size, function(n){
-      browser()
+      #browser()
       if(type == "bootstrap"){
         tmp <- get_bootstrap_sample(data)
       }
@@ -388,6 +412,23 @@ get_intonation_model_inner_voice <- function(pitch_stats_inner){
     mutate(model_type = "intonation_inner_voice")
 }
 
+get_onset_model_sync <- function(onset_stats, reduced = T){
+  get_lmer_model(onset_stats, 
+                 dv = c("LMOP"), 
+                 fixed = "condition", 
+                 ranef = c("piece",  "day"))  %>% 
+    mutate(model_type = "onset_sync")
+}
+
+get_onset_model_inner_voice <- function(onset_stats_inner){
+  get_lmer_model(onset_stats_inner, 
+                 dv = c("LMOP", "LMOE"), 
+                 fixed = "condition", 
+                 ranef = c("piece", "voice_type", "day"))  %>% 
+    
+    mutate(model_type = "onset_inner_voice")
+}
+
 get_permutation_tests <- function(pitch_stats, dv = c("LMAPE", "LMPP"), iv = c("condition", "day", "headset", "piece")){
   map_dfr(dv, function(v1){
     map_dfr(iv, function(v2){
@@ -400,12 +441,28 @@ get_permutation_tests <- function(pitch_stats, dv = c("LMAPE", "LMPP"), iv = c("
   })  
 }
 
-check_main_effects <- function(pitch_stats, pitch_stats_inner){
-  bind_rows(get_permutation_tests(pitch_stats) %>% mutate(type = "intonation_single"),
-            get_permutation_tests(pitch_stats_inner, 
-                                  iv = c("condition", "day", "voice_type", "piece"))
-            %>% mutate(type = "intonation_inner")
-            )  %>% mutate(p_val_str = sig_stars(p.value))
+check_main_effects <- function(stats, stats_inner, type = c("pitch", "onset")){
+  type <- match.arg(type)
+  if(type == "pitch") {
+    ret <- bind_rows(
+      get_permutation_tests(stats) %>% 
+        mutate(type = "intonation_single"),
+      get_permutation_tests(stats_inner, iv = c("condition", "day", "voice_type", "piece"))
+      %>% mutate(type = "intonation_inner")
+      ) 
+  }
+  else{
+    ret <- bind_rows(
+      get_permutation_tests(stats, dv = c("LMOP"), iv = c("condition", "day", "piece")) %>% 
+        mutate(type = "onset_sync"),
+      get_permutation_tests(stats_inner,
+                            dv = c("LMOP", "LMOE"),
+                            iv = c("condition", "day", "voice_type", "piece"))
+              %>% mutate(type = "onset_inner")
+    )
+    
+  }
+  ret %>% mutate(p_val_str = sig_stars(p.value))
 }
 
 get_synchrony_indicators <- function(pitch_data){
@@ -436,18 +493,23 @@ get_synchrony_indicators <- function(pitch_data){
   }) %>% left_join(pitch_data %>% distinct(piece_take, condition), by = "piece_take")
 }
 
-get_vertical_indicators <- function(pitch_data){
+get_onset_stats <- function(pitch_data){
   indicators <- 
     pitch_data %>% 
     filter(sync)%>% 
     group_by(piece_take, nom_onset, condition, day, piece, repetition) %>%
-    summarise(MOP = sd(real_onset), 
-              MOP2 = sd(real_onset)/sqrt(length(real_onset)),
-              MAPE = mean(abs(d_pitch_res)),
-              LMOP = -log(MOP),
-              LMOP2 = -log(MOP2),
-              LMAPE = -log(MAPE),
-              .groups = "drop") 
+    summarise(OP = sd(real_onset), 
+              OP2 = sd(real_onset)/sqrt(length(real_onset)),
+              #MAPE = mean(abs(d_pitch_res)),
+              LMOP = -log(OP),
+              LMOP2 = -log(OP2),
+              #LMAPE = -log(MAPE),
+              .groups = "drop") %>% 
+    group_by(piece_take, condition, day, piece, repetition) %>%
+    summarise(MOP = mean(OP, na.rm = T),
+              LMOP = - -log(MOP),
+              .groups = "drop")
+    
   indicators
 }
 
@@ -468,8 +530,13 @@ get_singing_errors <- function(note_tracks, note_tracks_annotated){
               by = c("piece_take", "headset", "piece", "repetition")) %>% 
     filter(!is.na(pos))
   
+  tmp <- tmp %>% 
+    inner_join(note_tracks_annotated %>% 
+                 select(note_id, d_pitch) %>% 
+                 filter(!is.na(d_pitch)), 
+               by = "note_id") %>% mutate(error = error | abs(d_pitch) > 1) 
   error_log <- 
-    lme4::glmer(error ~ condition + (1|piece) + (1|headset) +(1|day), 
+    lme4::glmer(error ~ condition + (1|piece) + (1|headset) + (1|day), 
                 family = binomial, 
                 data = tmp )
   
@@ -479,21 +546,44 @@ get_singing_errors <- function(note_tracks, note_tracks_annotated){
     select(term, DV, estimate, p_val_str, R2_conditional, R2_marginal) 
 }
 
+get_drift_model <- function(drift_data){
+  model <- drift_data %>% 
+    filter(type == "pos", 
+           term != "(Intercept)", 
+           scope == "total")  %>% 
+    get_lmer_model(dv = c("estimate"), 
+                   fixed = "condition", ranef = c("piece", "day"))
+  model
+}
+
+get_tempo_model <- function(tempo_data){
+  tempo_data %>% 
+    mutate(log_abs_drift = -log(abs(dt)), log_abs_total_drift = -log(abs(total_drift))) %>% 
+    get_lmer_model(dv = c("log_abs_drift", "mean_tempo", "log_abs_total_drift"), fixed = "condition", ranef = c("piece", "day"))
+  
+}
+
 plot_error_rates <- function(note_tracks, note_tracks_annotated){
-  browser()
   tmp <- note_tracks %>%
     left_join(note_tracks_annotated %>% 
                 distinct(piece_take, headset, condition, piece, repetition, day), 
               by = c("piece_take", "headset", "piece", "repetition")) %>% 
-    filter(!is.na(pos)) %>% 
-    group_by(condition, piece, day, headset) %>% 
+    filter(!is.na(pos))
+  
+  tmp <- tmp %>% 
+    inner_join(note_tracks_annotated %>% 
+                 select(note_id, d_pitch) %>% 
+                 filter(!is.na(d_pitch)), 
+               by = "note_id") %>% 
+    mutate(error = error | abs(d_pitch) > 1) 
+  #browser()
+  tmp <- tmp %>% group_by(condition, piece, day, headset) %>% 
     summarise(error_rate = mean(error),
               NLER = -log(error_rate),
               .groups = "drop")
   plot_main_effect(tmp, dv = "error_rate")
     
 }
-
 
 read_offsets <- function(data_dir = "data/metadata"){
   fnames <-  list.files(data_dir, "*offsets.rds", full.names = T)  
@@ -505,4 +595,73 @@ read_offsets <- function(data_dir = "data/metadata"){
   offsets[offsets$take == 33 & offsets$piece == "a1-1" & offsets$headset == 1, ]$offset <- 0
   offsets[offsets$take == 33 & offsets$piece == "a1-1" & offsets$headset == 1, ]$offset_sec <- 0   
   offsets  %>% arrange(take, headset, offset)
+}
+
+analyze_tempo_and_drift <- function(clean_nt){
+  tmp <- clean_nt %>% 
+    group_by(piece_take, headset) %>% 
+    mutate(d_pos = c(diff(pos), NA), 
+           ioi = c(diff(real_onset), NA), 
+           nom_ioi = c(diff(nom_onset), NA), 
+           T = ioi/nom_ioi) %>%  
+    ungroup() %>% 
+    filter(d_pos == 1, nom_ioi %in% c(2, 4))
+  map_dfr(c(FALSE, TRUE), function(remove_outlier){
+    map_dfr(unique(tmp$piece_take), function(pt) {
+      tmp2 <- tmp %>% filter(piece_take == pt)
+      if(remove_outlier){
+        tmp2 <- tmp2 %>% filter(!(T %in% (boxplot(tmp2$T) %>% pluck("out"))))
+      }
+      model <- tmp2 %>% lm(T ~ real_onset, data = .) 
+      model_coef <- coef(model)
+      total_drift <- end_to_start_diff(predict(model))
+      bind_cols(tmp2 %>% distinct(piece_take, condition, day, piece, repetition), 
+                tibble(dt =  model_coef[2], 
+                       model_tempo = model_coef[1],     
+                       mean_tempo = mean(tmp2$T),
+                       total_drift = total_drift,
+                       remove_outlier = remove_outlier
+                ))
+    })
+    
+  }) 
+}
+
+get_tukeys_lmer <- function(stats, dv = "LMAPE", fixef = "condition", ranef = c("piece", "day", "headset")){
+  tmp <- stats %>% 
+    group_by_at(ranef) %>% 
+    mutate(res = scale(!!sym(dv)) %>% as.numeric()) %>% 
+    distinct_at(c(fixef, ranef, "res"))
+  tmp <- tmp %>% 
+    lm(as.formula(sprintf("res  ~ %s", fixef)), data = .) %>% 
+    aov() %>% 
+    TukeyHSD() %>% 
+    broom::tidy() %>% mutate(p_var_str = sig_stars(adj.p.value))
+  tmp
+}
+
+get_all_tukeys <- function(pitch_stats, pitch_stats_inner, onset_stats, onset_stats_inner){
+  bind_rows(
+    get_tukeys_lmer(pitch_stats, dv = "LMAPE", ranef = c("piece", "day", "headset")) %>% 
+      mutate(type = "intonation_model_LMAPE"),
+    get_tukeys_lmer(pitch_stats, dv = "LMPP", ranef = c("piece", "day", "headset")) %>% 
+      mutate(type = "intonation_model_LMPP"),
+    get_tukeys_lmer(pitch_stats_inner, dv = "LMAPE", ranef = c("piece", "day", "voice_type")) %>% 
+      mutate(type = "intonation_model_inner_LMAPE"),
+    get_tukeys_lmer(pitch_stats_inner, dv = "LMPP", ranef = c("piece", "day", "voice_type")) %>% 
+      mutate(type = "intonation_model_inner_LMPP"),
+    get_tukeys_lmer(onset_stats, dv = "LMOP", ranef = c("piece", "day")) %>% 
+      mutate(type = "onset_model_LMOP"),
+    get_tukeys_lmer(onset_stats_inner, dv = "LMOP", ranef = c("piece", "day", "voice_type")) %>% 
+      mutate(type = "onset_model_inner_LMOP"))
+    
+}
+get_mean_tukeys <- function(all_tukeys){
+  all_tukeys %>% 
+    group_by(contrast) %>% 
+    summarise(mean_d = mean(estimate),
+              BF05 = mean(adj.p.value < .05)/(.05*n()),
+              BF01 = mean(adj.p.value < .01)/(.01*n()),
+              BF001 = mean(adj.p.value < .001)/(.001*n())) %>% 
+    arrange(desc(abs(mean_d)))  
 }
