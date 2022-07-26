@@ -24,6 +24,7 @@ voices <- c("hs7" = "soprano1",
             "hs6" = "tenor2",
             "hs3" = "bass1",
             "hs4" = "bass2")
+
 voice_types <- str_remove(voices, "[0-9]$") %>% unique()
 
 score_metadata_from_fname <- function(fname){
@@ -121,6 +122,7 @@ read_note_tracks_by_list <- function(file_list){
 }
 
 read_note_tracks <- function(data_dir, pattern = ".csv"){
+  browser()
   read_note_tracks_by_list(list.files(data_dir, pattern = pattern, full.names = T))
 }
 
@@ -192,7 +194,8 @@ annotate_note_tracks <- function(note_tracks, scores, track_info, offsets){
   
   sync_points <- scores %>% 
     group_by(piece, nom_onset, no_voices) %>% 
-    summarise(sync_point = n() == no_voices, 
+#    summarise(sync_point = n() == no_voices, 
+    summarise(sync_point = n() > 1, 
               .groups = "drop") %>% 
     filter(sync_point) %>% 
     distinct(piece, nom_onset)
@@ -208,10 +211,10 @@ end_to_start_diff <- function(x){
 
 remove_linear_trend <- function(pitch_data, slope = NULL, intercept = NULL){
   if(is.null(slope) || is.null(intercept)){
-    model <- lm(d_pitch ~ onset, data = pitch_data) 
+    model <- lm(d_pitch ~ real_onset, data = pitch_data) 
     intercept <- coef(model)[1]
     slope <- coef(model)[2]    
-    residuals <- pitch_data$d_pitch - (intercept + pitch_data$onset * slope)
+    residuals <- pitch_data$d_pitch - (intercept + pitch_data$real_onset * slope)
   }
   else{
     residuals <- residuals(model)
@@ -300,7 +303,7 @@ analyze_drift_and_tuning <- function(pitch_data){
       pull(pitch) %>% 
       find_global_tuning_offset(epsilon = .01)  
     
-    total <- map_dfr(c("pos", "onset"), ~{get_linear_trend(tmp, dv = "d_pitch", iv = .x)}) %>% 
+    total <- map_dfr(c("pos", "real_onset"), ~{get_linear_trend(tmp, dv = "d_pitch", iv = .x)}) %>% 
       mutate(scope = "total", 
              voice_type = "all", 
              tuning_offset = global_offset,
@@ -317,7 +320,7 @@ analyze_drift_and_tuning <- function(pitch_data){
         pull(pitch) %>% 
         find_global_tuning_offset(epsilon = .01)  
       
-      map_dfr(c("pos", "onset"), ~{ get_linear_trend(tmp2, dv = "d_pitch", iv = .x) })%>% 
+      map_dfr(c("pos", "real_onset"), ~{ get_linear_trend(tmp2, dv = "d_pitch", iv = .x) })%>% 
         mutate(scope = hs, 
                voice_type = tmp$voice_type[1], 
                tuning_offset = offset, 

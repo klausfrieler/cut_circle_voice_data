@@ -25,12 +25,7 @@ The two works by Josquin consisted of a single parts, whereas the Dufay masses c
 All works execpt Dufay's Agnus II were set in four-part harmony (named here consistently as soprano, alto, tenor, and bass). Dufay's Agnus II features  only soprano and alto. All voices were sung by two singers, singing in unisone except for a few final notes, which were split in two (dufay-agnus1, dufay-kyrie1) or on a single occasion in three tones (dufay-kyrie1). 
 
 All singers were equipped with headsets and recorded (soprano: headsets 7 and 8, alto: headsets 1 and 2, tenor: headsets 5 and 6, bass: headsets 3 and 4). The recordings were transcribed with the help of Tony software (REF TONY) and manually corrected and optimized where the algorithm gave erroneous or sub-optimal results.
-Subsequently, the note tracks with exact onsets,duration, and pitches (measured in Hz) were imported into Sonic Visualiser and in manually annotated with note labels, which were generated from digital scores of all works with the help of **music21**. During this step, extra and misplaced notes were also annotated by an musicologist. All annotated note tracks were exported in CSV format and imported into R for further analysis, along with various metadata. This resulted in 672 note tracks with a total of `r nrow(tar_read(note_tracks))` tone events.
-
-## Measures
-In 
-
-
+Subsequently, the note tracks with exact onsets,duration, and pitches (measured in Hz) were imported into Sonic Visualiser and in manually annotated with note labels, which were generated from digital scores of all works with the help of **music21**. During this step, extra and misplaced notes were also annotated by an musicologist. All annotated note tracks were exported in CSV format and imported into R for further analysis, along with various metadata. This resulted in `r nrow(tar_read(clean_note_tracks) %>% distinct(piece_take, headset))` note tracks with a total of `r nrow(tar_read(note_tracks))` tone events. For further processing, a variant of the dataset was created by filtering notes that were annotated as errors, resulting in a remaining set of `r nrow(tar_read(clean_note_tracks))` note events.
 ```{r piece_stats}
 tar_read(piece_info) %>% 
   select(ID = piece, Work = full_name) %>% 
@@ -39,6 +34,10 @@ tar_read(piece_info) %>%
   flextable::autofit()
 ```
 
+
+
+
+A digital representation of the scores consisting of nominal MIDI pitch and nominal onset (in units of smallest duration, which was the quarter note length) were also imported and joined to the note track data. From this final representations several performance accuracy measures were derived pertaining to intonation and timing. 
 
 ```{r take_stats, echo = FALSE}
 tar_read(clean_note_tracks) %>% 
@@ -55,5 +54,84 @@ tar_read(clean_note_tracks) %>%
   flextable::flextable() %>% 
   flextable::set_caption("Basic statistics of the single takes.") %>% 
   flextable::autofit()
+```
+
+## Measures
+### Intonation
+#### Overall tuning and  pitch drift
+It turned out that no take was sung according to 440 Hz standard tuning. Furthermore, it is well-known that choirs can exhibit pitch drift, which would distort the measurement of deviation from nominal pitch. In order to account for both effects, we removed any  possible linear trend from the overall series of pitch deviations across all voices, as tuning and drift should be considered a global phenomenom. Different parts and repetition were treated separately for convenience in this way. 
+
+The raw pitch values in Hz of the note tracks were converted to fractional MIDI pitch based on 440 Hz concert tuning. The deviation of these pitch values from nominal pitch include thus a global deviation from standard tuning as well as possible linear trends. A simple linear regression model over onsets and pitch deviation was used to removed drift and tuning bias from the pitch deviations, by substituting raw pitch deviation with the residual values from the trend. We used furthermore the pitch drift slopes as and extra indicator for performance accuracy.
+
+
+### Intonation performance indicators
+
+We derived a set of performance indicators from the pitch deviations. First, we defined the mean absolute pitch error (MAPE) as the singer-wise mean of absolute pitch deviations per single note track (section). Additionally, we used the standard deviation of singer- and section-wise pitch deviation as a measure for mean pitch precision (MPP). Since both measures are always positive and thus not normal distributed, we used the negative logarithms of both measures for modeling purposes (pitch accuracy and pitch precision), where now higher values indicate more precise and accurate intonation. 
+
+One important point has to be discussed here. In using the deviation from nominal MIDI pitch values derived from the scores, we implicitly assume that the singers were using 12-tone equal temperament for their intonation, which, strictly speaking, is not necessarily a valid assumption, even though previous studies (Mauch et al, Fischer et al.) showed that, normally, the actually employed intonation strategy cannot be reliably inferred from real singing data (though a small preference for 12-TET was observed.) One reason is that the theoretical differences between 12-TET and, say, just intonation are in same order of magnitude as the intonation accuracy of professional singers (and much smaller for amateurs). This even further complicated by drift phenomenon, also in the same order of magnitude. Since we want mainly to compare different condition here, the assumption of a 12-TET intonation seems not particularly restrictive, if we can assume that the choir uses basically the same intonation strategy across all pieces and conditions, which is safe assumption. The potential systematic error stemming from the assumption of 12-TET intonation when in fact another strategy is used results then, at least theoretically, in constant bias. The total mean absolute pitch error is `r 100*(mean(abs(tar_read(clean_note_tracks)$d_pitch_res)) %>% round(3))` cents across all singers, which is smaller than the Pythagorean comma of about 23.46 cents, indicating that the assumption of 12-TET intonation strategy seems justified.
+
+That being said, we were also defining a third measure of intonation quality which is independent from any assumptions of intonation strategy as it compares the pitch deviation with a voice as we have two singers here. These are called inner-voice MAPE defined as the section-wise mean of absolute pitch deviation between the two singers of a voice. Likewise, we defined also a inner voice MPP, as the standard deviation of pitch deviations between singers of the same voice within a section. 
+
+Finally, we also used the slope of the overall pitch drift as global indicator for performance accuracy (even though it can be argued that pitch drift is not a strong indicator for this but a result of intonation adaptations.)
+
+### Synchronization
+The second class of performance indicators is about note timing. In contrast to intonation we did not compare here the note timing to the nominal timing as prescribed by the score, as perfectly strict timing is not a common stylistic goal in Renaissance music performances. Instead, we only used in-voice and across-voice synchronization. We defined mean onset precision (MOP) as the section-wise mean of standard deviations for the onsets on synchronization points, which are  points in the score where at least two voices have a common note onset (this pertains to 76.2% of all note events) Inner voice onset precision was similarly defined as the section-wise mean standard deviation of onset differences between the singers within a voice. Additionally, we defined mean onset error (MOE) as the section-wise average of absolute onset differences. Again, for linear regression models we used the negative logarithm of these values (onset precision and onset accuracy).
+
+We also analyzed overall tempo and tempo drift as further performance indicator for timing. Tempo was measured as the ratio of performed inter-onset intervals (IOI) to nominal inter-onset intervals, where we only used IOIs with nominal value of 2 and 4 minimal metrical units, which amount to half and full notes (for reasons of numerical stability). Global tempo drift was estimated using the slope of a linear regression model of measured quarter duration against onset. 
+
+### Singing Errors
+Last but not least, the ostentatious singing errors can be used as performance indicators. Here we used the amount fo annotated erroneous tones, which included wrong pitches and pitches that were interrupted. Additionally, we also counted pitch deviations larger than a semitone as a singing errors. even when consonant in the actual context.     
+
+# Results
+##Intonation
+We used linear mixed regression models to estimate the effect of condition (touch, no-touch, far-apart) on pitch accuracy, where we used day of performance, piece, and singer as random effects. As can be seen in Fig. XXX, and corroborated by a permutation test (``coin::indepence_test``), there are significant differences for all four variables. Two models for LMAPE and LMPP were calculated (``lmerTest`` package for R), which can be found in Tab. 3. there were significant different for all indicators and variables except for the no-touch condition for LMAPE (reference category is "far-apart"). The touch category showed lower pitch accuracy and pitch precision than the no-touch which in turn showed lower than Nakawa's conditional and marginal R^2 were .441 and .008 for LMAPE and .402 and .022 for LMPP. Hence,effects for pitch precision are generally stronger than for pitch accuracy. 
+
+
+```{r global.LMAPE, fig.cap = "Mean absolute pitch error for condition, day, piece and headset (singer)", fig.align = "center"}
+tar_read(main_effects_LMAPE)
+```
+
+```{r intonation_model_single}
+tar_read(intonation_model_single) %>% 
+  mutate(term = str_remove(term, "condition"), 
+         DV = str_replace(DV, "LMAPE", "Pitch Accuracy"),
+         DV = str_replace(DV, "LMPP",  "Pitch Precision"),
+         estimate = round(estimate, 3)) %>% 
+  select(Indicator = DV, Term = term, beta = estimate, `p` = p_val_str) %>% 
+  flextable::flextable() %>% 
+  flextable::autofit() %>% 
+  flextable::set_caption("Linear Regression models for pitch accuracy and pitch precisionn.")
+
+```
+
+The linear regression model for inner pitch accuracy and precision can be found in Tab. 4. Here we see only significant effects of inner pitch accuracy but not for inner pitch precision.
+
+```{r intonation_model_inner}
+tar_read(intonation_model_inner) %>% 
+  mutate(term = str_remove(term, "condition"), 
+         DV = str_replace(DV, "LMAPE", "Pitch Accuracy"),
+         DV = str_replace(DV, "LMPP",  "Pitch Precision"),
+         estimate = round(estimate, 3)) %>% 
+  select(Indicator = DV, Term = term, beta = estimate, `p` = p_val_str) %>% 
+  flextable::flextable() %>% 
+  flextable::autofit() %>% 
+  flextable::set_caption("Linear Regression models for inner pitch accuracy and pitch precision.")
+```
+
+In order to get estimates for the relative effect sizes of intonation LMMs, we resorted to standardization of global and inner pitch accuracy and pitch precision by day, headset and piece and subsequently calculation of Tukey contrasts, which give then approximate effect sizes for the single contrast. Effecs are generally of low to medium size, the largest can be found for touch vs. far-part conditions for inner pitch accuracy with `d = -.819`. Generally, the largest effect sizes can be found for this pair of conditions  for all four performance indicators. However, the absolute effect sizes between conditions in terms of absolute pitch errors are less than 1 cent (average .4 cents, range -2.1 to 3.7 cents for touch vs. far-apart), which is way less than any pitch perception threshold.
+
+```{r intonation_effectsize}
+tar_read(all_tukeys) %>% 
+  filter(str_detect(type, "LMAPE|LMPP")) %>% 
+  mutate(type = str_replace(type, "intonation_model_LMAPE", "Global Pitch Accuracy"), 
+         type = str_replace(type, "intonation_model_LMPP", "Global Pitch Precision"), 
+         type = str_replace(type, "intonation_model_inner_LMAPE", "Inner Pitch Accuracy"), 
+         type = str_replace(type, "intonation_model_inner_LMPP", "Inner Pitch Precision"), 
+         estimate = round(estimate, 3)) %>% 
+  select(Indicator = type, Contrast = contrast, `Cohen's d`= estimate, `p` = p_var_str) %>% 
+  flextable::flextable() %>% 
+  flextable::autofit() %>% 
+  flextable::set_caption("Approximate effect sizes global and inner pitch accuracy and pitch precision.")
+
 ```
 
