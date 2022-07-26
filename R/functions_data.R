@@ -176,11 +176,16 @@ annotate_note_tracks <- function(note_tracks, scores, track_info, offsets){
                              mutate(headset = sprintf("hs%d", headset)), 
                            by = c("piece_take", "headset")) %>% 
     mutate(real_onset = onset + offset_sec)  
+  browser()
+  scores_voice_count <- scores %>% distinct(piece, voice_type) %>% count(piece, name = "no_voices")
+  scores <- scores %>% left_join(scores_voice_count, by = "piece")
+  
   sync_points <- scores %>% 
-    group_by(piece, nom_onset) %>% 
-    summarise(sync_point = n() == 4, .groups = "drop") %>% 
+    group_by(piece, nom_onset, no_voices) %>% 
+    summarise(sync_point = n() == no_voices, 
+              .groups = "drop") %>% 
     filter(sync_point) %>% 
-    select(piece, nom_onset)
+    distinct(piece, nom_onset)
   ret <- ret %>% left_join(sync_points %>% mutate(sync = TRUE)) 
   ret[is.na(ret$sync),]$sync <- FALSE
   ret
@@ -232,16 +237,17 @@ get_pitch_stats_inner_voice <- function(data){
 }
 
 get_onset_stats_inner_voice <- function(data){
-  ret1 <- data %>% 
-    group_by(piece_take, voice_type, nom_onset, piece, condition, day) %>% 
-    summarise(d_onset = abs(diff(real_onset)), .groups = "drop")
-
+  # ret1 <- data %>% 
+  #   group_by(piece_take, voice_type, nom_onset, piece, condition, day) %>% 
+  #   summarise(d_onset = abs(diff(real_onset)), .groups = "drop")
+  # browser()
   ret2 <- data %>% 
     select(piece_take, voice_type, voice_no, condition, day, piece, pos, real_onset) %>% 
     pivot_wider(id_cols = c(piece_take, voice_type, condition, day, piece, pos), 
                 names_from = voice_no, 
                 values_from = real_onset, names_prefix = "voice") %>% 
     mutate(d_voice = voice2 - voice1)
+  #browser()
   ret2 %>%    
     group_by(piece_take, day, piece, condition, voice_type) %>% 
     summarise(
@@ -315,28 +321,7 @@ analyze_drift_and_tuning <- function(pitch_data){
   })
 }
 
-sig_stars <- Vectorize(
-  function(p_value){
-    if(is.na(p_value)){
-      return(NA)
-    }
-    stars <- ""
-    if (p_value < 0.1) stars <- "."
-    if (p_value < 0.05) stars <- "*"
-    if (p_value < 0.01) stars <- "**"
-    if (p_value < 0.001) stars <- "***" 
-    sprintf("%.3f%s", p_value, stars)
-  }
-)
 
-make_nice_lmer <- function(lmer_mod, DV = ""){
-  broom.mixed::tidy(lmer_mod) %>% 
-    mutate(DV = !!DV, 
-           p_val_str = sig_stars(p.value)) %>% 
-    bind_cols(broom.mixed::glance(lmer_mod)) %>% 
-    bind_cols(performance::r2_nakagawa(lmer_mod) %>% as.data.frame() %>% select(1, 2) %>% as_tibble()) 
-    
-}
 
 get_lmer_model <- function(pitch_stats, 
                            dv = "LMAPE", 
@@ -361,40 +346,7 @@ get_lmer_model <- function(pitch_stats,
   })
 }
 
-get_bootstrap_sample <- function(data){
-  data[sample(1:nrow(data), replace = T),]
-}
 
-get_permutation <- function(data, target_var = "day"){
-  stopifnot(length(target_var) == 1)
-  data %>% mutate(!!sym(target_var) := sample(!!sym(target_var)))
-}
-
-bootstrap_lm <- function(data, 
-                         dv = "LMAPE", 
-                         iv = "day", 
-                         size = 1, 
-                         type = c("bootstrap", "permutation")){
-  type = match.arg(type)      
-  map_dfr(dv, function(v1){
-    #browser()
-    form <- sprintf("%s ~ %s", v1, paste(iv, collapse = " + ")) %>% as.formula()
-    map_dfr(1:size, function(n){
-      #browser()
-      if(type == "bootstrap"){
-        tmp <- get_bootstrap_sample(data)
-      }
-      else{
-        tmp <- get_permutation(data, iv)
-      }
-      tmp %>% 
-        lm(form, data = .) %>% 
-        broom::tidy() %>% 
-        mutate(iter = n)
-    })
-    
-  })
-}
 
 get_intonation_model_single <- function(pitch_stats, reduced = T){
   get_lmer_model(pitch_stats, 
@@ -620,8 +572,7 @@ analyze_tempo_and_drift <- function(clean_nt){
                        model_tempo = model_coef[1],     
                        mean_tempo = mean(tmp2$T),
                        total_drift = total_drift,
-                       remove_outlier = remove_outlier
-                ))
+                       remove_outlier = remove_outlier))
     })
     
   }) 
