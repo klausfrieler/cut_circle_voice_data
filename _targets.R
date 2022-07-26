@@ -16,7 +16,8 @@ list(
   tar_target(score_dir, "data/note_data_csv"),
   tar_target(track_info_path, file.path(metadata_dir, "track_coding.xlsx"), format ="file"),
   tar_target(track_info, read_track_info(track_info_path)),
-  #tar_target(file_list, list_csv_files(data_dir)),
+  tar_target(piece_info, read_piece_info(track_info_path)),
+
   tar_target(scores, 
              read_score_files(score_dir)),
   tar_target(offsets, 

@@ -16,14 +16,15 @@ pieces <- c("j1" = "josquin-virgo",
             "m2" = "dufay-kyrie2", 
             "m3" = "dufay-gloria" 
 )
-voices <- c("hs7" = "sopran1", 
-            "hs8" = "sopran2",
-            "hs1" = "alt1",
-            "hs2" = "alt2",
+voices <- c("hs7" = "soprano1", 
+            "hs8" = "soprano2",
+            "hs1" = "alto1",
+            "hs2" = "alto2",
             "hs5" = "tenor1",
             "hs6" = "tenor2",
             "hs3" = "bass1",
             "hs4" = "bass2")
+voice_types <- str_remove(voices, "[0-9]$") %>% unique()
 
 score_metadata_from_fname <- function(fname){
   map_dfr(basename(fname) %>% tools::file_path_sans_ext() %>% str_split("_"), function(elts){
@@ -104,7 +105,7 @@ read_note_tracks_by_list <- function(file_list){
              str_replace("~x", "x") %>% 
              str_replace("bx", "x"),
            pos = as.numeric(str_extract(pos, "^[0-9]+")),
-           voice_type = factor(voice_type, levels = c("sopran", "alt", "tenor", "bass")),           
+           voice_type = factor(voice_type, levels = voice_types),           
            note_id = sprintf("%s:%s", id, note_label)) %>% 
     select(pos, onset, onset_hms, pitch, pitch_hz, ioi, int = int_midi, everything() ) 
 
@@ -144,7 +145,7 @@ read_score_files <- function(score_dir = "data/note_data_csv", pattern = "*.csv"
              bar = measure_number) %>% 
       bind_cols(score_metadata_from_fname(fn))
   }) %>% 
-    mutate(voice_type = factor(voice_type, levels = c("sopran", "alt", "tenor", "bass")))
+    mutate(voice_type = factor(voice_type, levels = voice_types))
   #browser()
   #Josquins all a whole tone too low?!
   ret[str_detect(ret$piece, "jos"),]$nom_pitch <- ret[str_detect(ret$piece, "jos"),]$nom_pitch - 2 
@@ -157,6 +158,15 @@ read_track_info <- function(path){
     select(take, condition, day) %>% 
     mutate(take = sprintf("take%02d", as.integer(take)), 
            condition = c("tc" = "touch", "ntc" = "no-touch", "ntf" = "far-apart")[condition])
+  
+}
+
+read_piece_info <- function(path){
+  readxl::read_excel(path, sheet = "music_metadata") %>% 
+    filter(!is.na(piece)) %>% 
+    select(piece_short = piece, full_name) %>% 
+    mutate(piece = pieces[piece_short]) %>% 
+    select(piece, full_name)
   
 }
 
@@ -176,7 +186,7 @@ annotate_note_tracks <- function(note_tracks, scores, track_info, offsets){
                              mutate(headset = sprintf("hs%d", headset)), 
                            by = c("piece_take", "headset")) %>% 
     mutate(real_onset = onset + offset_sec)  
-  browser()
+
   scores_voice_count <- scores %>% distinct(piece, voice_type) %>% count(piece, name = "no_voices")
   scores <- scores %>% left_join(scores_voice_count, by = "piece")
   
@@ -221,12 +231,14 @@ get_pitch_stats <- function(data){
 }
 
 get_pitch_stats_inner_voice <- function(data){
-  #browser()
-  data %>% 
+  ret <-
+    data %>% 
     select(piece_take, voice_type, voice_no, condition, day, piece, pos, pitch) %>% 
     pivot_wider(id_cols = c(piece_take, voice_type, condition, day, piece, pos), 
                 names_from = voice_no, 
-                values_from = pitch, names_prefix = "voice") %>% 
+                values_from = pitch, names_prefix = "voice") 
+  #browser()
+  ret <- ret %>% 
     mutate(d_voice = voice2 - voice1) %>% 
     group_by(piece_take, day, piece, condition, voice_type) %>% 
     summarise(
@@ -237,7 +249,7 @@ get_pitch_stats_inner_voice <- function(data){
 }
 
 get_onset_stats_inner_voice <- function(data){
-  # ret1 <- data %>% 
+  # ret1 <- data %>%
   #   group_by(piece_take, voice_type, nom_onset, piece, condition, day) %>% 
   #   summarise(d_onset = abs(diff(real_onset)), .groups = "drop")
   # browser()
