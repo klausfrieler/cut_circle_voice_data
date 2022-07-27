@@ -251,7 +251,7 @@ get_pitch_stats_inner_voice <- function(data){
       LMPP  = -log(MPP), .groups = "drop")
 }
 
-get_onset_stats_inner_voice <- function(data){
+get_onset_stats_inner_voice <- function(data, max_diff = .3, only_error = F){
   # ret1 <- data %>%
   #   group_by(section, voice_type, nom_onset, piece, condition, day) %>% 
   #   summarise(d_onset = abs(diff(real_onset)), .groups = "drop")
@@ -262,12 +262,29 @@ get_onset_stats_inner_voice <- function(data){
                 names_from = voice_no, 
                 values_from = real_onset, names_prefix = "voice") %>% 
     mutate(d_voice = voice2 - voice1)
-  #browser()
+  d_voice <- ret2 %>% pull(d_voice)
+  messagef("Removed %d from %d events", length(d_voice) - length(d_voice[abs(d_voice) < max_diff]), length(d_voice))
+  browser()
+  if(only_error){
+    if(only_error){
+      tmp <- ret2 %>% mutate(error = (abs(d_voice) > max_diff))
+      error_log <- 
+        lme4::glmer(error ~ condition + (1|piece) +  (1|day) + (1|voice_type), 
+                    family = binomial, 
+                    data = tmp )  %>%  
+        make_nice_lmer(DV = "error") %>% 
+        filter(effect == "fixed") %>% 
+        select(term, DV, estimate, p_val_str, R2_conditional, R2_marginal) 
+      
+      return(error_log)
+    }
+    
+  }
   ret2 %>%    
     group_by(section, day, piece, condition, voice_type) %>% 
     summarise(
-      MOE = mean(abs(d_voice), na.rm = T),
-      MOP  = mean(sd(d_voice, na.rm = T)),
+      MOE = mean(abs(d_voice[abs(d_voice) < max_diff]), na.rm = T),
+      MOP  = mean(sd(d_voice[abs(d_voice) < max_diff], na.rm = T)),
       LMOE = -log(MOE),
       LMOP  = -log(MOP), .groups = "drop") 
   # %>% 
@@ -458,23 +475,39 @@ get_synchrony_indicators <- function(pitch_data){
   }) %>% left_join(pitch_data %>% distinct(section, condition), by = "section")
 }
 
-get_onset_stats <- function(pitch_data){
+get_onset_stats <- function(pitch_data, remove_outlier = T, only_error = F){
   indicators <- 
     pitch_data %>% 
     filter(sync)%>% 
     group_by(section, nom_onset, condition, day, piece, repetition) %>%
     summarise(OP = sd(real_onset), 
-              OP2 = sd(real_onset)/sqrt(length(real_onset)),
-              #MAPE = mean(abs(d_pitch_res)),
               LMOP = -log(OP),
-              LMOP2 = -log(OP2),
-              #LMAPE = -log(MAPE),
-              .groups = "drop") %>% 
+              .groups = "drop")
+  browser()
+  if(only_error){
+    tmp <- indicators %>% mutate(error = (OP %in% (boxplot(indicators$OP) %>% pluck("out"))))
+    error_log <- 
+      lme4::glmer(error ~ condition + (1|piece) +  (1|day), 
+                  family = binomial, 
+                  data = tmp )  %>%  
+      make_nice_lmer(DV = "error") %>% 
+      filter(effect == "fixed") %>% 
+      select(term, DV, estimate, p_val_str, R2_conditional, R2_marginal) 
+    
+    return(error_log)
+  }
+  
+  if(remove_outlier){
+    before <- nrow(indicators)
+    indicators <- remove_outlier(indicators, "OP")
+    messagef("Removed %d events from %d", before - nrow(indicators), before)
+  }  
+  #browser()
+  indicators <- indicators %>%
     group_by(section, condition, day, piece, repetition) %>%
     summarise(MOP = mean(OP, na.rm = T),
               LMOP = - -log(MOP),
-              .groups = "drop")
-    
+              .groups = "drop")  
   indicators
 }
 
@@ -523,8 +556,14 @@ get_drift_model <- function(drift_data){
 
 get_tempo_model <- function(tempo_data){
   tempo_data %>% 
-    mutate(log_abs_drift = -log(abs(dt)), log_abs_total_drift = -log(abs(total_drift))) %>% 
-    get_lmer_model(dv = c("log_abs_drift", "mean_tempo", "log_abs_total_drift"), fixed = "condition", ranef = c("piece", "day"))
+    mutate(log_abs_drift = -log(abs(dt)), 
+           log_abs_total_drift = -log(abs(total_drift)),
+           log_mean_tempo = -log(mean_tempo)) %>% 
+    get_lmer_model(dv = c("log_abs_drift", 
+                          "mean_tempo", 
+                          "log_abs_total_drift"), 
+                   fixed = "condition", 
+                   ranef = c("piece", "day"))
   
 }
 
@@ -622,6 +661,7 @@ get_all_tukeys <- function(pitch_stats, pitch_stats_inner, onset_stats, onset_st
       mutate(type = "onset_model_inner_LMOP"))
     
 }
+
 get_mean_tukeys <- function(all_tukeys){
   all_tukeys %>% 
     group_by(contrast) %>% 

@@ -8,6 +8,7 @@ knitr::opts_chunk$set(collapse = TRUE, comment = "#>", echo = FALSE, warnings = 
 options(tidyverse.quite = T)
 library(targets)
 library(tidyverse)
+source("R/functions_util.R")
 tar_make()
 ```
 
@@ -43,7 +44,9 @@ A digital representation of the scores consisting of nominal MIDI pitch and nomi
 
 
 ## Measures
+
 ### Intonation
+
 #### Overall tuning and  pitch drift
 It turned out that no take was sung according to 440 Hz standard tuning. Furthermore, it is well-known that choirs can exhibit pitch drift, which would distort the measurement of deviation from nominal pitch. In order to account for both effects, we removed any  possible linear trend from the overall series of pitch deviations across all voices, as tuning and drift should be considered a global phenomenom. Different parts and repetition were treated separately for convenience in this way. 
 
@@ -61,26 +64,32 @@ That being said, we were also defining a third measure of intonation quality whi
 Finally, we also used the slope of the overall pitch drift as global indicator for performance accuracy (even though it can be argued that pitch drift is not a strong indicator for this but a result of intonation adaptations.)
 
 ### Synchronization
-The second class of performance indicators is about note timing. In contrast to intonation we did not compare here the note timing to the nominal timing as prescribed by the score, as perfectly strict timing is not a common stylistic goal in Renaissance music performances. Instead, we only used in-voice and across-voice synchronization. We defined mean onset precision (MOP) as the section-wise mean of standard deviations for the onsets on synchronization points, which are  points in the score where at least two voices have a common note onset (this pertains to 76.2% of all note events) Inner voice onset precision was similarly defined as the section-wise mean standard deviation of onset differences between the singers within a voice. Additionally, we defined mean onset error (MOE) as the section-wise average of absolute onset differences. Again, for linear regression models we used the negative logarithm of these values (onset precision and onset accuracy).
+The second class of performance indicators is about note timing. In contrast to intonation we did not compare here the note timing to the nominal timing as prescribed by the score, as perfectly strict timing is not a common stylistic goal in Renaissance music performances. Instead, we only used in-voice and across-voice synchronization. We defined mean onset precision (MOP) as the section-wise mean of standard deviations for the onsets on synchronization points, which are  points in the score where at least two voices have a common note onset (this amounts to 76.2% of all note events). We filtered outliers (nased on the 1.5 IQR criterion) as gross singing errors have a large influence here, which is not desired.   
+
+Inner voice onset precision was similarly defined as the section-wise mean standard deviation of onset differences between the singers within a voice, where we filtered events that were more than 300 ms apart, as these can be considered singing errors, since the maximum tempo of all sections was 250 ms for quarter notes.  
+
+Additionally, we defined mean onset error (MOE) as the section-wise average of absolute onset differences. Again, for linear regression models we used the negative logarithm of these values (onset precision and onset accuracy).
 
 We also analyzed overall tempo and tempo drift as further performance indicator for timing. Tempo was measured as the ratio of performed inter-onset intervals (IOI) to nominal inter-onset intervals, where we only used IOIs with nominal value of 2 and 4 minimal metrical units, which amount to half and full notes (for reasons of numerical stability). Global tempo drift was estimated using the slope of a linear regression model of measured quarter duration against onset. 
 
-### Singing Errors
-Last but not least, the ostentatious singing errors can be used as performance indicators. Here we used the amount fo annotated erroneous tones, which included wrong pitches and pitches that were interrupted. Additionally, we also counted pitch deviations larger than a semitone as a singing errors. even when consonant in the actual context.     
+### Singing errors
+Last but not least, the ostentatious singing errors can be used as performance indicators. Here we used the amount of annotated erroneous tones, which included wrong pitches and pitches that were interrupted. Additionally, we also counted pitch deviations larger than a semitone as a singing errors, even when consonant in the actual context. 
+
+
 
 # Results
 
-## Intonation
+## Pitch precision and accuracy
 
-We used linear mixed regression models to estimate the effect of condition (touch, no-touch, far-apart) on pitch accuracy, where we used day of performance, piece, and singer as random effects. As can be seen in Fig. \@ref(fig:global_LMAP), and corroborated by a permutation test (``coin::indepence_test``), there are significant differences for all four variables. Two models for LMAPE and LMPP were calculated (``lmerTest`` package for R), which can be found in Tab. \@ref(tab:intonation_model_single). there were significant different for all indicators and variables except for the no-touch condition for LMAPE (reference category is "far-apart"). The touch category showed lower pitch accuracy and pitch precision than the no-touch which in turn showed lower than Nakawa's conditional and marginal R^2 were .441 and .008 for LMAPE and .402 and .022 for LMPP. Hence,effects for pitch precision are generally stronger than for pitch accuracy. 
+We used linear mixed regression models to estimate the effect of condition (touch, no-touch, far-apart) on pitch accuracy, where we used day of performance, piece, and singer as random effects. As can be seen in Figs. 1a and 1b, and corroborated by a permutation test (``coin::indepence_test``), there are significant differences for all four variables. Two models for LMAPE and LMPP were calculated (``lmerTest`` package for R), which can be found in Tab. 1. There were significant difference for all indicators and variables except for the *no-touch* condition for LMAPE (reference category is "far-apart"). The touch category showed lower pitch accuracy and pitch precision than the no-touch which in turn showed lower than Nakawa's conditional and marginal R^2 were .441 and .008 for LMAPE and .402 and .022 for LMPP. Hence, effects for pitch precision are generally stronger than for pitch accuracy. Furthermore, MAPE and MPP are strongly correlated (`r(334) = .911`), indicating that there is no systematic bias in pitch hights, so that all pitch errors are due to random varions about the true or intended pitch. 
 
 
-```{r global_LMAPE, fig.cap = "Figure 1. Pitch accuracy for condition, day, piece and headset (singer)", fig.align = "center"}
+```{r global_LMAPE, fig.cap = "Figure 1a. Pitch accuracy for condition, day, piece and headset (singer)", fig.align = "center"}
 tar_read(main_effects_LMAPE)
 ```
 
 
-```{r global_LMPP, fig.cap = "Figure 2. Pitch precision for condition, day, piece and headset (singer)", fig.align = "center"}
+```{r global_LMPP, fig.cap = "Figure 2b. Pitch precision for condition, day, piece and headset (singer)", fig.align = "center"}
 tar_read(main_effects_LMPP)
 ```
 
@@ -89,7 +98,8 @@ tar_read(intonation_model_single) %>%
   mutate(term = str_remove(term, "condition"), 
          DV = str_replace(DV, "LMAPE", "Pitch Accuracy"),
          DV = str_replace(DV, "LMPP",  "Pitch Precision"),
-         estimate = round(estimate, 3)) %>% 
+         estimate = round(estimate, 3),
+         DV = remove_repeats(DV)) %>% 
   select(Indicator = DV, Term = term, beta = estimate, `p` = p_val_str) %>% 
   flextable::flextable() %>% 
   flextable::autofit() %>% 
@@ -97,21 +107,22 @@ tar_read(intonation_model_single) %>%
 
 ```
 
-The linear regression model for inner pitch accuracy and precision can be found in Tab. 4. Here we see only significant effects of inner pitch accuracy but not for inner pitch precision.
+The linear regression model for inner pitch accuracy and precision can be found in Tab. 3. Here we see only significant effects of inner pitch accuracy but not for inner pitch precision.
 
 ```{r intonation_model_inner}
 tar_read(intonation_model_inner) %>% 
   mutate(term = str_remove(term, "condition"), 
          DV = str_replace(DV, "LMAPE", "Pitch Accuracy"),
          DV = str_replace(DV, "LMPP",  "Pitch Precision"),
-         estimate = round(estimate, 3)) %>% 
+         estimate = round(estimate, 3),
+         DV = remove_repeats(DV)) %>% 
   select(Indicator = DV, Term = term, beta = estimate, `p` = p_val_str) %>% 
   flextable::flextable() %>% 
   flextable::autofit() %>% 
   flextable::set_caption("Table 3. Linear Regression models for inner pitch accuracy and pitch precision.")
 ```
 
-In order to get estimates for the relative effect sizes of intonation LMMs, we resorted to standardization of global and inner pitch accuracy and pitch precision by day, headset and piece and subsequently calculation of Tukey contrasts, which give then approximate effect sizes for the single contrast. Effecs are generally of low to medium size, the largest can be found for touch vs. far-part conditions for inner pitch accuracy with `d = -.819`. Generally, the largest effect sizes can be found for this pair of conditions  for all four performance indicators. However, the absolute effect sizes between conditions in terms of absolute pitch errors are less than 1 cent (average .4 cents, range -2.1 to 3.7 cents for touch vs. far-apart), which is way less than any pitch perception threshold.
+In order to get estimates for the relative effect sizes of intonation LMMs, we resorted to standardization of global and inner pitch accuracy and pitch precision by day, headset and piece and subsequently calculation of Tukey contrasts, which give then approximate effect sizes for the single contrast. Effects are generally of low to medium size, the largest can be found for touch vs. far-part conditions for inner pitch accuracy with `d = -.819`. Generally, the largest effect sizes can be found for this pair of conditions  for all four performance indicators. However, the absolute effect sizes between conditions in terms of absolute pitch errors are less than 1 cent (average 0.4 cents, range -2.1 to 3.7 cents for touch vs. far-apart), which is way less than any pitch discrimnation threshold.
 
 ```{r intonation_effectsize}
 tar_read(all_tukeys) %>% 
@@ -120,7 +131,8 @@ tar_read(all_tukeys) %>%
          type = str_replace(type, "intonation_model_LMPP", "Global Pitch Precision"), 
          type = str_replace(type, "intonation_model_inner_LMAPE", "Inner Pitch Accuracy"), 
          type = str_replace(type, "intonation_model_inner_LMPP", "Inner Pitch Precision"), 
-         estimate = round(estimate, 3)) %>% 
+         estimate = round(estimate, 3),
+         type = remove_repeats(type)) %>% 
   select(Indicator = type, Contrast = contrast, `Cohen's d`= estimate, `p` = p_var_str) %>% 
   flextable::flextable() %>% 
   flextable::autofit() %>% 
@@ -128,12 +140,128 @@ tar_read(all_tukeys) %>%
 
 ```
 
+### Pitch errors
+For singing errors, as defined above, We calculated a mixed logistic regression with day, piece, and headset as random effects and condition as fixed effects. The results can be found in Table 5. Both the touch and the no-touch condition had a significant increase of error rates compared to the far-apart condition with a 55% and 59% increase of odd ratios. 
+
+```{r singing_error_model}
+tar_read(singing_error_model) %>% 
+  mutate(term = str_remove(term, "condition"),
+         exp_beta = round(exp(estimate), 3), 
+         estimate = round(estimate, 3)) %>% 
+  select(Term = term, beta = estimate, `exp(beta)`= exp_beta, `p` = p_val_str) %>% 
+  flextable::flextable() %>% 
+  flextable::autofit() %>% 
+  flextable::set_caption("Table 5. Mixed logistic regression models for singing errors.")
+
+```
+
+### Pitch drift
+
+We used the slope of overall pitch drift per section as another performance indicator and subjected it to a mixed linear regression with condition as fixed effect and day and piece as random effect. The model did not show  significant results for condition, though there was considerable variation in pitch drift with respect to sections, mostly showing downward drift (`r tar_read(drift_data) %>% filter(term == "real_onset") %>% summarise(m = 100*mean(estimate < 0)) %>% pull(m) %>% round(1)` % of all cases). About of `r tar_read(drift_data) %>% filter(term == "real_onset") %>% summarise(m = 100*mean(p.value < .001)) %>% pull() %>% round(1)`% the slopes were significantly different from 0 on the 5% level, indicating that pitch drift is a very common phenomenon. 
+
+Total drift across sections is, however, small with `r tar_read(drift_data) %>% distinct(section, condition, total_drift) %>% summarise(m = 100*mean(total_drift)) %>% pull() %>% round(1)` cents on average and a range from `r tar_read(drift_data) %>% distinct(section, condition, total_drift) %>% summarise(m = 100*min(total_drift)) %>% pull() %>% round(1)`  to `r tar_read(drift_data) %>% distinct(section, condition, total_drift) %>% summarise(m = 100*max(total_drift)) %>% pull() %>% round(1)` cents. 
+
+
+## Timing
+
+The distribution of onset precision between voices for condition, day, and piece can be seen in Fig. 2a, and those for with voices in Fig. 2b. To check for main effects of condition, piece, day, and voice type (for inner onset precision) we again used permutation test (`coin::indepence_test`), which only showed effects for piece for mean onset precision and for piece and voice type for inner onset precision. However, the mixed linear regression models for both types of onset precision, using condition as fixed effect and day and piece and day, piece, and voice type, resp., did show  one significant effect for the touch condition in the case of onset precision across voices. This is has  a medium relative effect size of `d =  -.662`, i.e., lower onset precision for *touch* compared to *far-apart* (again calculated using standardization across random effects and then using Tukey contrasts). However, the absolute effect size is only `d = -0.0035`, i.e., about 4 ms, way below any onset discrimination threshold.
+
+
+```{r onset_model_sync}
+tar_read(onset_model_sync) %>% 
+  mutate(term = str_remove(term, "condition"), 
+         DV = str_replace(DV, "LMOP",  "Mean Onset Precision"),
+         estimate = round(estimate, 3),
+         DV = remove_repeats(DV)) %>% 
+  select(Indicator = DV, Term = term, beta = estimate, `p` = p_val_str) %>% 
+  flextable::flextable() %>% 
+  flextable::autofit() %>% 
+  flextable::set_caption("Table 6. Mixed linear regression models for mean onset precision between voices.")
+
+```
+
+
+```{r onset_model_inner}
+tar_read(onset_model_inner) %>% 
+  filter(DV == "LMOP") %>% 
+  mutate(term = str_remove(term, "condition"), 
+         DV = str_replace(DV, "LMOP",  "Mean Onset Precision"),
+         DV = str_replace(DV, "LMOE",  "Mean Onset Accuracy"),
+         estimate = round(estimate, 3),
+         DV = remove_repeats(DV)) %>% 
+  select(Indicator = DV, Term = term, beta = estimate, `p` = p_val_str) %>% 
+  flextable::flextable() %>% 
+  flextable::autofit() %>% 
+  flextable::set_caption("Table 7. Mixed linear regression models for mean onset precision within voices.")
+
+```
+
+```{r global_LMOP, fig.cap = "Figure 2a. Mean onset precision for condition, day, and piece ", fig.align = "center"}
+tar_read(main_effects_LMOP)
+```
+
+
+```{r global_LMOP_inner, fig.cap = "Figure 2b. Inner onset precision for condition, day, piece and voice type", fig.align = "center"}
+tar_read(main_effects_LMOP_inner)
+```
+
+## Timing Errors
+
+We analyzed timing errors, again between and within voices. Between voices, we counted any synchronization point as an timing error if the onset precision (standard deviation of onsets) at this points is an outlier in the distribution of all onset precisions using the usual 1.5 * IQR criterion. Subsequently, we calculated a mixed logistic regression model for errors with condition as fixed effect and day and piece as random effects. The results can be found in Table 8. No significant effect could be found, though, the p value for the touch condition is very close the significance. Interestingly, the coefficient is negative, indicating *less* errors in the touch condition.
+
+
+```{r onset_error_model_sync}
+tar_read(onset_error_model_sync) %>% 
+  mutate(term = str_remove(term, "condition"),
+         exp_beta = round(exp(estimate), 3), 
+         estimate = round(estimate, 3)) %>% 
+  select(Term = term, beta = estimate, `exp(beta)`= exp_beta, `p` = p_val_str) %>% 
+  flextable::flextable() %>% 
+  flextable::autofit() %>% 
+  flextable::set_caption("Table 8. Mixed logistic regression models for timing error between voices.")
+
+```
+
+Within voice, timing errors were defined as onset differences greater than a fixed threshold of 300 ms (maximal quarter note duration) and used a logistic regression for so defined errors with condition as fixed effect and day, piece, and voice type as random effects. Results can be found in Table 9. Here, the no-touch condition became significant with a 116% increase in odd ratios
+
+```{r onset_error_model_inner}
+tar_read(onset_error_model_inner) %>% 
+  mutate(term = str_remove(term, "condition"),
+         exp_beta = round(exp(estimate), 3),
+         estimate = round(estimate, 3)) %>% 
+  select(Term = term, beta = estimate, `exp(beta)`= exp_beta, `p` = p_val_str) %>% 
+  flextable::flextable() %>% 
+  flextable::autofit() %>% 
+  flextable::set_caption("Table 9. Mixed logistic regression models for timing error within voices.")
+
+```
+
+### Tempo and tempo drift
+
+Lastly, we also used the linear tempo trend as well as absolute tempo as performance indicators. We used hte negative logarithm of linear slopes, negative logarithm of total tempo change and mean tempo and calculated mixed linear models with condition as fixed effect and day and piece as random effects. Result can be found in Table 10. Except for significant non-zero intercepts, indicating that tempo drift was a common phenomenon, only the mean tempo of the touch condition compared to the far-apart condition became significant, with a negative sign, indicating generally slower tempo in the touch condition. The relative effect size is  mediam large with `d = .688`, but the absolute effect is at most `r tar_read(tempo_analysis) %>% group_by(condition, piece) %>% summarise(m = mean(mean_tempo), .groups = "drop") %>% filter(condition != "no-touch") %>% mutate(condition = str_replace(condition, "-", "_")) %>% pivot_wider(id_cols = piece, names_from = condition, values_from = m)  %>% mutate(d_tempo = touch - far_apart, d_tempo_rel = 100 * (touch - far_apart)/far_apart) %>% summarise(m= max(abs(d_tempo_rel))) %>% pull(m) %>% round(1)` % or `r tar_read(tempo_analysis) %>% group_by(condition, piece) %>% summarise(m = mean(mean_tempo), .groups = "drop") %>% filter(condition != "no-touch") %>% mutate(condition = str_replace(condition, "-", "_")) %>% pivot_wider(id_cols = piece, names_from = condition, values_from = m)  %>% mutate(d_tempo = touch - far_apart, d_tempo_rel = 100 * (touch - far_apart)/far_apart) %>% summarise(m= 1000*max(abs(d_tempo))) %>% pull(m) %>% round(0)` ms, again, way below any percepual threshold.
+
+
+```{r tempo_model}
+tar_read(tempo_model) %>% 
+  mutate(term = str_remove(term, "condition"), 
+         DV = str_replace(DV, "mean_tempo",  "Mean quarter length duration"),
+         DV = str_replace(DV, "log_abs_drift",  "Neg. logarithm of absolute tempo slope"),
+         DV = str_replace(DV, "log_abs_total_drift",  "Neg. logarithm of absolute tempo change"),
+         estimate = round(estimate, 3),
+         DV = remove_repeats(DV)) %>% 
+  select(Indicator = DV, Term = term, beta = estimate, `p` = p_val_str) %>% 
+  flextable::flextable() %>% 
+  flextable::autofit() %>% 
+  flextable::set_caption("Table 10. Mixed linear regression models for tempo slope, tempo change, and mean tempo")
+
+```
 # Appendix
 ```{r appendix_take_stats, echo = FALSE}
 tar_read(clean_note_tracks) %>% 
   #>distinct(piece, take, condition, headset) %>% 
   group_by(piece, take, condition, repetition) %>% 
-  summarise(number_of_notes = n(), no_voices = n_distinct(voice_type), .groups = "drop") %>%
+  summarise(number_of_notes = n(), 
+            no_voices = n_distinct(voice_type), .groups = "drop") %>%
   select(Take = take, 
          Piece = piece, 
          Repetition = repetition, 
@@ -141,6 +269,9 @@ tar_read(clean_note_tracks) %>%
          `No. Notes`= number_of_notes,
          `No. Voices` = no_voices) %>% 
   arrange(Take, Repetition, Piece) %>% 
+  mutate(Take = remove_repeats(Take),
+         #Repetition = remove_repeats(Repetition),
+         Condition = remove_repeats(Condition)) %>% 
   flextable::flextable() %>% 
   flextable::set_caption("Table A1. Basic statistics of the single takes.") %>% 
   flextable::autofit()

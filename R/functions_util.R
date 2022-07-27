@@ -76,6 +76,27 @@ bootstrap_lm <- function(data,
     
   })
 }
+
+get_outlier <- function(x){
+  boxplot(x) %>% pluck("out")
+}
+
+remove_outlier <- function(x, col = NULL){
+  if("data.frame" %in% class(x) & !is.null(col)){
+    stopifnot(col %in% names(x))
+    return(x %>% filter(!(!!sym(col) %in% get_outlier(!!sym(col)))))
+  }
+  out <- 
+  x[!(x %in% out)]
+}
+
+remove_repeats <- function(str_vec){
+  r <- rle(str_vec)
+  map(1:length(r$values), function(i){
+    c(r$values[i], rep("", r$lengths[i]-1))
+  }) %>% unlist()
+}
+
 find_global_tuning_offset <- function(pitch_vector, epsilon = .1, verbose = F){
   step <- .1
   search_seq <- seq(-.5, .5,  step)  
