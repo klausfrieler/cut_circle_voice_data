@@ -2,7 +2,7 @@ library(tidyverse)
 library(readr)
 library(performance)
 library(broom.mixed)
-
+messagef <- function(...) message(sprintf(...))
 pieces <- c("j1" = "josquin-virgo", 
             "j2" = "josquin-dung", 
             "a1" = "dufay-agnus1", 
@@ -551,10 +551,22 @@ read_take_audio <- function(audio_dir = "e:/projects/science/MPIEA/projects/cut_
   names(snippets) <-  file_list %>% basename() %>% tools::file_path_sans_ext()
   list(full = full, snippets = snippets)
 }
+read_take_audio_anton <- function(audio_dir = "C:/Users/dassc/desktop/MPIAE/Cut Circle Project", 
+                                  day = 1L,
+                                  take = "5b", headset = 1L){
+  take_dir <- file.path(audio_dir, sprintf("Day %s/Take %s", day, take))
+  full  <- tuneR::readWave(file.path(take_dir, 
+                                     sprintf("%02d_H-Set%s.wav", headset, headset)))
+  
+  file_list <- list.files(sprintf("%s/hs%d", take_dir, headset), pattern = "*.wav", full.names = T)
+  snippets <- map(file_list, function(fn) tuneR::readWave(fn))
+  names(snippets) <-  file_list %>% basename() %>% tools::file_path_sans_ext()
+  list(full = full, snippets = snippets)
+}
 
-align_take_snippets <- function(audio_dir = "e:/projects/science/MPIEA/projects/cut_circle_voice_data/audios", 
-                                take = 5, headset = 3, win_size = 20){
-  audios <- read_take_audio(audio_dir, take, headset)
+align_take_snippets <- function(audio_dir = "C:/Users/dassc/desktop/MPIAE/Cut Circle Project", 
+                                day = 1L, take = "10", headset = 1, win_size = 20){
+  audios <- read_take_audio_anton(audio_dir, day= day, take = take, headset = headset)
   take_pos <- map_dfr(names(audios$snippets), function(n){
     find_snippet(audios$full, 
                  audios$snippets[[n]], 
