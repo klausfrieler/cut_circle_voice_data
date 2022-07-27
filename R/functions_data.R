@@ -565,7 +565,7 @@ read_take_audio_anton <- function(audio_dir = "C:/Users/dassc/desktop/MPIAE/Cut 
 }
 
 align_take_snippets <- function(audio_dir = "C:/Users/dassc/desktop/MPIAE/Cut Circle Project", 
-                                day = 1L, take = "10", headset = 1, win_size = 20){
+                                day = 2L, take = "23", headset = 1, win_size = 20){
   audios <- read_take_audio_anton(audio_dir, day= day, take = take, headset = headset)
   take_pos <- map_dfr(names(audios$snippets), function(n){
     find_snippet(audios$full, 
