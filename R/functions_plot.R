@@ -11,13 +11,18 @@ pitch_ridge_plot <- function(data, bw = .2){
 
 plot_main_effect <- function(pitch_stats, 
                              dv = "LMAPE", 
-                             vars = c("day", "condition", "headset", "piece")){
+                             vars = c("day", "condition", "headset", "piece"),
+                             alpha = .2){
   labels <- c("MAPE" = "Mean Absolute Pitch Error", 
               "MPP" = "Mean Pitch Standard Deviation",
               "LMAPE" = "Pitch Accuracy",
               "LMPP" = "Pitch Precision",
               "MOP" = "Mean Onset Standard Deviation",
-              "LMOP" = "Mean Onset Precision")
+              "LMOP" = "Mean Onset Precision",
+              "MOE" = "Mean Onset Error", 
+              "LMOE" = "Mean Log Onset Error",
+              "error_rate"= "Mean Error Rate", 
+              "NLER" = "Neg. Log Mean Error Rate")
 
   tmp <- pitch_stats %>% 
     select(all_of(c(dv, vars))) %>% 
@@ -27,7 +32,7 @@ plot_main_effect <- function(pitch_stats,
                y = !!sym(dv), 
                fill = name)) 
   q <- q + geom_boxplot() 
-  q <- q + geom_jitter(width =.2, alpha = .2) 
+  q <- q + geom_jitter(width =.2, alpha = alpha) 
   q <- q + theme_minimal() 
   q <- q + facet_wrap(~name, scale = "free_y") 
   q <- q + coord_flip()  

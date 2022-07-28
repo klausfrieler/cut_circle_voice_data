@@ -2,7 +2,15 @@ library(tidyverse)
 library(readr)
 library(performance)
 library(broom.mixed)
+<<<<<<< HEAD
 messagef <- function(...) message(sprintf(...))
+=======
+library(tuneR)
+library(tictoc)
+
+messagef <- function(...) message(sprintf(...))
+
+>>>>>>> c09179111e3de97db6b07fa1ba6058ddd79cd328
 pieces <- c("j1" = "josquin-virgo", 
             "j2" = "josquin-dung", 
             "a1" = "dufay-agnus1", 
@@ -12,14 +20,16 @@ pieces <- c("j1" = "josquin-virgo",
             "m2" = "dufay-kyrie2", 
             "m3" = "dufay-gloria" 
 )
-voices <- c("hs7" = "sopran1", 
-            "hs8" = "sopran2",
-            "hs1" = "alt1",
-            "hs2" = "alt2",
+voices <- c("hs7" = "soprano1", 
+            "hs8" = "soprano2",
+            "hs1" = "alto1",
+            "hs2" = "alto2",
             "hs5" = "tenor1",
             "hs6" = "tenor2",
             "hs3" = "bass1",
             "hs4" = "bass2")
+
+voice_types <- str_remove(voices, "[0-9]$") %>% unique()
 
 score_metadata_from_fname <- function(fname){
   map_dfr(basename(fname) %>% tools::file_path_sans_ext() %>% str_split("_"), function(elts){
@@ -46,13 +56,18 @@ note_track_metadata_from_fname <- function(fname){
   }) %>% mutate(id = str_remove(basename(fname) %>% tools::file_path_sans_ext(), "x$") )
   
 }
-
+section_from_fname <- function(fname){
+  note_track_metadata_from_fname(fname) %>% 
+    mutate(section = sprintf("%s:%s:r%d", take, piece, repetition)) %>% 
+    pull(section)
+}
 list_csv_files <- function(dir){
   list.files(dir, pattern = ".csv", full.names = T)
 }
 
 read_note_tracks_by_list <- function(file_list){
   outliers <- tibble()
+  browser()
   col_types <- cols(
     onset = col_double(),
     pitch = col_double(),
@@ -95,14 +110,14 @@ read_note_tracks_by_list <- function(file_list){
              str_replace("~x", "x") %>% 
              str_replace("bx", "x"),
            pos = as.numeric(str_extract(pos, "^[0-9]+")),
-           voice_type = factor(voice_type, levels = c("sopran", "alt", "tenor", "bass")),           
+           voice_type = factor(voice_type, levels = voice_types),           
            note_id = sprintf("%s:%s", id, note_label)) %>% 
     select(pos, onset, onset_hms, pitch, pitch_hz, ioi, int = int_midi, everything() ) 
 
-    ret[is.na(ret$repetition),]$repetition <- 1
+  ret[is.na(ret$repetition),]$repetition <- 1
   ret[is.na(ret$pos_spec), ]$pos_spec <- ""
   ret <- ret %>% 
-    mutate(piece_take = sprintf("%s:%s:r%d", take, piece, repetition),
+    mutate(section = sprintf("%s:%s:r%d", take, piece, repetition),
            error = as.integer(pos_spec %in% c("n", "x", "~")))  
 
   
@@ -111,6 +126,7 @@ read_note_tracks_by_list <- function(file_list){
 }
 
 read_note_tracks <- function(data_dir, pattern = ".csv"){
+  browser()
   read_note_tracks_by_list(list.files(data_dir, pattern = pattern, full.names = T))
 }
 
@@ -135,8 +151,8 @@ read_score_files <- function(score_dir = "data/note_data_csv", pattern = "*.csv"
              bar = measure_number) %>% 
       bind_cols(score_metadata_from_fname(fn))
   }) %>% 
-    mutate(voice_type = factor(voice_type, levels = c("sopran", "alt", "tenor", "bass")))
-  browser()
+    mutate(voice_type = factor(voice_type, levels = voice_types))
+  #browser()
   #Josquins all a whole tone too low?!
   ret[str_detect(ret$piece, "jos"),]$nom_pitch <- ret[str_detect(ret$piece, "jos"),]$nom_pitch - 2 
   ret
@@ -151,21 +167,42 @@ read_track_info <- function(path){
   
 }
 
-annotate_note_tracks <- function(note_tracks, scores, track_info){
+read_piece_info <- function(path){
+  readxl::read_excel(path, sheet = "music_metadata") %>% 
+    filter(!is.na(piece)) %>% 
+    select(piece_short = piece, full_name) %>% 
+    mutate(piece = pieces[piece_short]) %>% 
+    select(piece, full_name)
+  
+}
+
+annotate_note_tracks <- function(note_tracks, scores, track_info, offsets){
   ret <- 
     note_tracks %>% 
     left_join(scores %>% select(-id), by = c("piece", "voice_type", "note_label")) %>% 
     filter(!is.na(pos),  pos_spec != "~", pos_spec != "x", pos_spec != "n", pos_spec != "g") %>% 
     mutate(d_pitch = pitch - nom_pitch) %>% 
     select(-error)
-
   ret  <- ret %>% left_join(track_info, by = "take") %>% mutate(day = sprintf("day-%d", day))
+  #browser()
+  ret <- ret %>% left_join(offsets %>% 
+                             select(offset_sec, 
+                                    section, 
+                                    headset) %>% 
+                             mutate(headset = sprintf("hs%d", headset)), 
+                           by = c("section", "headset")) %>% 
+    mutate(real_onset = onset + offset_sec)  
+
+  scores_voice_count <- scores %>% distinct(piece, voice_type) %>% count(piece, name = "no_voices")
+  scores <- scores %>% left_join(scores_voice_count, by = "piece")
   
   sync_points <- scores %>% 
-    group_by(piece, nom_onset) %>% 
-    summarise(sync_point = n() == 4, .groups = "drop") %>% 
+    group_by(piece, nom_onset, no_voices) %>% 
+#    summarise(sync_point = n() == no_voices, 
+    summarise(sync_point = n() > 1, 
+              .groups = "drop") %>% 
     filter(sync_point) %>% 
-    select(piece, nom_onset)
+    distinct(piece, nom_onset)
   ret <- ret %>% left_join(sync_points %>% mutate(sync = TRUE)) 
   ret[is.na(ret$sync),]$sync <- FALSE
   ret
@@ -178,10 +215,10 @@ end_to_start_diff <- function(x){
 
 remove_linear_trend <- function(pitch_data, slope = NULL, intercept = NULL){
   if(is.null(slope) || is.null(intercept)){
-    model <- lm(d_pitch ~ onset, data = pitch_data) 
+    model <- lm(d_pitch ~ real_onset, data = pitch_data) 
     intercept <- coef(model)[1]
     slope <- coef(model)[2]    
-    residuals <- pitch_data$d_pitch - (intercept + pitch_data$onset * slope)
+    residuals <- pitch_data$d_pitch - (intercept + pitch_data$real_onset * slope)
   }
   else{
     residuals <- residuals(model)
@@ -191,24 +228,26 @@ remove_linear_trend <- function(pitch_data, slope = NULL, intercept = NULL){
 }
 
 get_pitch_stats <- function(data){
-  data %>% group_by(piece_take, headset) %>% 
+  data %>% group_by(section, headset) %>% 
     mutate(MAPE = mean(abs(d_pitch_res), na.rm = T),
            MPP  = mean(sd(d_pitch_res, na.rm = T)),
            LMAPE = -log(MAPE),
            LMPP  = -log(MPP)) %>% 
     ungroup() %>% 
-    distinct(piece, take, piece_take, day, condition, headset, repetition, MAPE, MPP, LMAPE, LMPP)
+    distinct(piece, take, section, day, condition, headset, repetition, MAPE, MPP, LMAPE, LMPP)
 }
 
 get_pitch_stats_inner_voice <- function(data){
-  #browser()
-  data %>% 
-    select(piece_take, voice_type, voice_no, condition, day, piece, pos, pitch) %>% 
-    pivot_wider(id_cols = c(piece_take, voice_type, condition, day, piece, pos), 
+  ret <-
+    data %>% 
+    select(section, voice_type, voice_no, condition, day, piece, pos, pitch) %>% 
+    pivot_wider(id_cols = c(section, voice_type, condition, day, piece, pos), 
                 names_from = voice_no, 
-                values_from = pitch, names_prefix = "voice") %>% 
+                values_from = pitch, names_prefix = "voice") 
+  #browser()
+  ret <- ret %>% 
     mutate(d_voice = voice2 - voice1) %>% 
-    group_by(piece_take, day, piece, condition, voice_type) %>% 
+    group_by(section, day, piece, condition, voice_type) %>% 
     summarise(
       MAPE = mean(abs(d_voice), na.rm = T),
       MPP  = mean(sd(d_voice, na.rm = T)),
@@ -216,45 +255,81 @@ get_pitch_stats_inner_voice <- function(data){
       LMPP  = -log(MPP), .groups = "drop")
 }
 
+get_onset_stats_inner_voice <- function(data, max_diff = .3, only_error = F){
+  # ret1 <- data %>%
+  #   group_by(section, voice_type, nom_onset, piece, condition, day) %>% 
+  #   summarise(d_onset = abs(diff(real_onset)), .groups = "drop")
+  # browser()
+  ret2 <- data %>% 
+    select(section, voice_type, voice_no, condition, day, piece, pos, real_onset) %>% 
+    pivot_wider(id_cols = c(section, voice_type, condition, day, piece, pos), 
+                names_from = voice_no, 
+                values_from = real_onset, names_prefix = "voice") %>% 
+    mutate(d_voice = voice2 - voice1)
+  d_voice <- ret2 %>% pull(d_voice)
+  messagef("Removed %d from %d events", length(d_voice) - length(d_voice[abs(d_voice) < max_diff]), length(d_voice))
+  browser()
+  if(only_error){
+    if(only_error){
+      tmp <- ret2 %>% mutate(error = (abs(d_voice) > max_diff))
+      error_log <- 
+        lme4::glmer(error ~ condition + (1|piece) +  (1|day) + (1|voice_type), 
+                    family = binomial, 
+                    data = tmp )  %>%  
+        make_nice_lmer(DV = "error") %>% 
+        filter(effect == "fixed") %>% 
+        select(term, DV, estimate, p_val_str, R2_conditional, R2_marginal) 
+      
+      return(error_log)
+    }
+    
+  }
+  ret2 %>%    
+    group_by(section, day, piece, condition, voice_type) %>% 
+    summarise(
+      MOE = mean(abs(d_voice[abs(d_voice) < max_diff]), na.rm = T),
+      MOP  = mean(sd(d_voice[abs(d_voice) < max_diff], na.rm = T)),
+      LMOE = -log(MOE),
+      LMOP  = -log(MOP), .groups = "drop") 
+  # %>% 
+  #   filter(section != "take21:dufay-agnus2:r2")
+  
+}
+
 remove_all_linear_trends <- function(pitch_data, max_error = 1){
   pitch_data <- pitch_data %>% filter(abs(d_pitch) < max_error)
-  map_dfr(unique(pitch_data$piece_take), function(tp){
+  map_dfr(unique(pitch_data$section), function(tp){
     tmp <- pitch_data %>% 
-      filter(piece_take == tp)
+      filter(section == tp)
     messagef("Removing linear trend for %s", tp)
     tmp %>% remove_linear_trend()
   })
   
 }
 
-get_linear_trend <- function(pitch_data, type = "position"){
-  if(type == "position"){
-    model <- lm(d_pitch ~ pos, data = pitch_data) 
-  }
-  else{
-    model <- lm(d_pitch ~ onset, data = pitch_data) 
-  }
+get_linear_trend <- function(pitch_data, dv = "d_pitch", iv = "pos"){
+  model <- lm(as.formula(sprintf("%s ~ %s", dv, iv)), data = pitch_data) 
   ret <- model %>% broom::tidy() %>% 
-    mutate(type = type, 
+    mutate(type = iv, 
            total_drift = predict(model) %>% end_to_start_diff())
   ret
 }
 
 analyze_drift_and_tuning <- function(pitch_data){
-  map_dfr(unique(pitch_data$piece_take), function(tp){
+  map_dfr(unique(pitch_data$section), function(tp){
     messagef("Analyzing drift: %s", tp)
     tmp <- pitch_data %>% 
-      filter(piece_take == tp)
+      filter(section == tp)
 
     global_offset <- tmp %>% 
       pull(pitch) %>% 
       find_global_tuning_offset(epsilon = .01)  
     
-    total <- map_dfr(c("position", "onset"), ~{get_linear_trend(tmp, .x)}) %>% 
+    total <- map_dfr(c("pos", "real_onset"), ~{get_linear_trend(tmp, dv = "d_pitch", iv = .x)}) %>% 
       mutate(scope = "total", 
              voice_type = "all", 
-             offset = global_offset,
-             piece_take = tp, 
+             tuning_offset = global_offset,
+             section = tp, 
              day = tmp$day[1], 
              piece = tmp$piece[1],
              condition = tmp$condition[1])
@@ -267,43 +342,20 @@ analyze_drift_and_tuning <- function(pitch_data){
         pull(pitch) %>% 
         find_global_tuning_offset(epsilon = .01)  
       
-      map_dfr(c("position", "onset"), ~{ get_linear_trend(tmp2, .x) })%>% 
+      map_dfr(c("pos", "real_onset"), ~{ get_linear_trend(tmp2, dv = "d_pitch", iv = .x) })%>% 
         mutate(scope = hs, 
                voice_type = tmp$voice_type[1], 
-               offset = offset, 
+               tuning_offset = offset, 
                day = tmp$day[1], 
                piece = tmp$piece[1],
-               piece_take = tp,
+               section = tp,
                headset = hs,
                condition = tmp$condition[1])
       
     }) %>% 
       bind_rows(total) %>% 
-      select(piece_take, type, scope, voice_type, condition, day, piece, headset, term, everything())
+      select(section, type, scope, voice_type, condition, day, piece, headset, term, everything())
   })
-}
-
-sig_stars <- Vectorize(
-  function(p_value){
-    if(is.na(p_value)){
-      return(NA)
-    }
-    stars <- ""
-    if (p_value < 0.1) stars <- "."
-    if (p_value < 0.05) stars <- "*"
-    if (p_value < 0.01) stars <- "**"
-    if (p_value < 0.001) stars <- "***" 
-    sprintf("%.3f%s", p_value, stars)
-  }
-)
-
-make_nice_lmer <- function(lmer_mod, DV = ""){
-  broom.mixed::tidy(lmer_mod) %>% 
-    mutate(DV = !!DV, 
-           p_val_str = sig_stars(p.value)) %>% 
-    bind_cols(broom.mixed::glance(lmer_mod)) %>% 
-    bind_cols(performance::r2_nakagawa(lmer_mod) %>% as.data.frame() %>% select(1, 2) %>% as_tibble()) 
-    
 }
 
 get_lmer_model <- function(pitch_stats, 
@@ -315,6 +367,7 @@ get_lmer_model <- function(pitch_stats,
     form <- sprintf("%s ~ %s + %s", v, 
                     fixed, 
                     paste(sprintf("(1|%s)", ranef), collapse = " + "))
+    #browser()
     mod <- lmerTest::lmer(form, data = pitch_stats) %>% make_nice_lmer(v)
     if(reduced){
       mod %>% 
@@ -327,40 +380,7 @@ get_lmer_model <- function(pitch_stats,
     
   })
 }
-get_bootstrap_sample <- function(data){
-  data[sample(1:nrow(data), replace = T),]
-}
 
-get_permutation <- function(data, target_var = "day"){
-  stopifnot(length(target_var) == 1)
-  data %>% mutate(!!sym(target_var) := sample(!!sym(target_var)))
-}
-
-bootstrap_lm <- function(data, 
-                         dv = "LMAPE", 
-                         iv = "day", 
-                         size = 1, 
-                         type = c("bootstrap", "permutation")){
-  type = match.arg(type)      
-  map_dfr(dv, function(v1){
-    browser()
-    form <- sprintf("%s ~ %s", v1, paste(iv, collapse = " + ")) %>% as.formula()
-    map_dfr(1:size, function(n){
-      browser()
-      if(type == "bootstrap"){
-        tmp <- get_bootstrap_sample(data)
-      }
-      else{
-        tmp <- get_permutation(data, iv)
-      }
-      tmp %>% 
-        lm(form, data = .) %>% 
-        broom::tidy() %>% 
-        mutate(iter = n)
-    })
-    
-  })
-}
 
 get_intonation_model_single <- function(pitch_stats, reduced = T){
   get_lmer_model(pitch_stats, 
@@ -378,6 +398,23 @@ get_intonation_model_inner_voice <- function(pitch_stats_inner){
     mutate(model_type = "intonation_inner_voice")
 }
 
+get_onset_model_sync <- function(onset_stats, reduced = T){
+  get_lmer_model(onset_stats, 
+                 dv = c("LMOP"), 
+                 fixed = "condition", 
+                 ranef = c("piece",  "day"))  %>% 
+    mutate(model_type = "onset_sync")
+}
+
+get_onset_model_inner_voice <- function(onset_stats_inner){
+  get_lmer_model(onset_stats_inner, 
+                 dv = c("LMOP", "LMOE"), 
+                 fixed = "condition", 
+                 ranef = c("piece", "voice_type", "day"))  %>% 
+    
+    mutate(model_type = "onset_inner_voice")
+}
+
 get_permutation_tests <- function(pitch_stats, dv = c("LMAPE", "LMPP"), iv = c("condition", "day", "headset", "piece")){
   map_dfr(dv, function(v1){
     map_dfr(iv, function(v2){
@@ -390,17 +427,33 @@ get_permutation_tests <- function(pitch_stats, dv = c("LMAPE", "LMPP"), iv = c("
   })  
 }
 
-check_main_effects <- function(pitch_stats, pitch_stats_inner){
-  bind_rows(get_permutation_tests(pitch_stats) %>% mutate(type = "intonation_single"),
-            get_permutation_tests(pitch_stats_inner, 
-                                  iv = c("condition", "day", "voice_type", "piece"))
-            %>% mutate(type = "intonation_inner")
-            )  %>% mutate(p_val_str = sig_stars(p.value))
+check_main_effects <- function(stats, stats_inner, type = c("pitch", "onset")){
+  type <- match.arg(type)
+  if(type == "pitch") {
+    ret <- bind_rows(
+      get_permutation_tests(stats) %>% 
+        mutate(type = "intonation_single"),
+      get_permutation_tests(stats_inner, iv = c("condition", "day", "voice_type", "piece"))
+      %>% mutate(type = "intonation_inner")
+      ) 
+  }
+  else{
+    ret <- bind_rows(
+      get_permutation_tests(stats, dv = c("LMOP"), iv = c("condition", "day", "piece")) %>% 
+        mutate(type = "onset_sync"),
+      get_permutation_tests(stats_inner,
+                            dv = c("LMOP", "LMOE"),
+                            iv = c("condition", "day", "voice_type", "piece"))
+              %>% mutate(type = "onset_inner")
+    )
+    
+  }
+  ret %>% mutate(p_val_str = sig_stars(p.value))
 }
 
 get_synchrony_indicators <- function(pitch_data){
-  map_dfr(unique(pitch_data$piece_take), function(tp){
-    tmp <- pitch_data %>% filter(piece_take == tp) 
+  map_dfr(unique(pitch_data$section), function(tp){
+    tmp <- pitch_data %>% filter(section == tp) 
     
     map_dfr(unique(tmp$voice_type), function(vt){
       messagef("Gettin synchronies for %s (%s)", tp, vt)
@@ -410,7 +463,7 @@ get_synchrony_indicators <- function(pitch_data){
       }
       tmp2 <- tmp %>% filter(voice_type == vt) %>% 
         distinct(pos, headset, .keep_all = T) %>% 
-        pivot_wider(id_cols = c(piece_take, pos), 
+        pivot_wider(id_cols = c(section, pos), 
                     names_from = c(voice_no), 
                     values_from = onset, names_prefix = "onset") 
       
@@ -420,22 +473,45 @@ get_synchrony_indicators <- function(pitch_data){
         summarise(synchrony = mean(d_onset, na.rm = T), 
                   abs_phase = mean(abs(d_onset), na.rm = T), 
                   phase_prop = mean(sign(d_onset), na.rm = T))  %>% 
-        mutate(piece_take = tp, voice_type = vt)
+        mutate(section = tp, voice_type = vt)
       
     })
-  }) %>% left_join(pitch_data %>% distinct(piece_take, condition), by = "piece_take")
+  }) %>% left_join(pitch_data %>% distinct(section, condition), by = "section")
 }
 
-get_vertical_indicators <- function(pitch_data){
+get_onset_stats <- function(pitch_data, remove_outlier = T, only_error = F){
   indicators <- 
     pitch_data %>% 
     filter(sync)%>% 
-    group_by(piece_take, nom_onset, condition, day, piece, repetition) %>%
-    summarise(MOP = sd(onset), 
-              MAPE = mean(abs(d_pitch_res)),
-              LMOP = -log(MOP),
-              LMAPE = -log(MAPE),
-              .groups = "drop") 
+    group_by(section, nom_onset, condition, day, piece, repetition) %>%
+    summarise(OP = sd(real_onset), 
+              LMOP = -log(OP),
+              .groups = "drop")
+  browser()
+  if(only_error){
+    tmp <- indicators %>% mutate(error = (OP %in% (boxplot(indicators$OP) %>% pluck("out"))))
+    error_log <- 
+      lme4::glmer(error ~ condition + (1|piece) +  (1|day), 
+                  family = binomial, 
+                  data = tmp )  %>%  
+      make_nice_lmer(DV = "error") %>% 
+      filter(effect == "fixed") %>% 
+      select(term, DV, estimate, p_val_str, R2_conditional, R2_marginal) 
+    
+    return(error_log)
+  }
+  
+  if(remove_outlier){
+    before <- nrow(indicators)
+    indicators <- remove_outlier(indicators, "OP")
+    messagef("Removed %d events from %d", before - nrow(indicators), before)
+  }  
+  #browser()
+  indicators <- indicators %>%
+    group_by(section, condition, day, piece, repetition) %>%
+    summarise(MOP = mean(OP, na.rm = T),
+              LMOP = - -log(MOP),
+              .groups = "drop")  
   indicators
 }
 
@@ -452,12 +528,17 @@ get_vertical_models <- function(vertical_indicators){
 get_singing_errors <- function(note_tracks, note_tracks_annotated){
   tmp <- note_tracks %>%
     left_join(note_tracks_annotated %>% 
-                distinct(piece_take, headset, condition, piece, repetition, day), 
-              by = c("piece_take", "headset", "piece", "repetition")) %>% 
+                distinct(section, headset, condition, piece, repetition, day), 
+              by = c("section", "headset", "piece", "repetition")) %>% 
     filter(!is.na(pos))
   
+  tmp <- tmp %>% 
+    inner_join(note_tracks_annotated %>% 
+                 select(note_id, d_pitch) %>% 
+                 filter(!is.na(d_pitch)), 
+               by = "note_id") %>% mutate(error = error | abs(d_pitch) > 1) 
   error_log <- 
-    lme4::glmer(error ~ condition + (1|piece) + (1|headset) +(1|day), 
+    lme4::glmer(error ~ condition + (1|piece) + (1|headset) + (1|day), 
                 family = binomial, 
                 data = tmp )
   
@@ -467,14 +548,44 @@ get_singing_errors <- function(note_tracks, note_tracks_annotated){
     select(term, DV, estimate, p_val_str, R2_conditional, R2_marginal) 
 }
 
+get_drift_model <- function(drift_data){
+  model <- drift_data %>% 
+    filter(type == "pos", 
+           term != "(Intercept)", 
+           scope == "total")  %>% 
+    get_lmer_model(dv = c("estimate"), 
+                   fixed = "condition", ranef = c("piece", "day"))
+  model
+}
+
+get_tempo_model <- function(tempo_data){
+  tempo_data %>% 
+    mutate(log_abs_drift = -log(abs(dt)), 
+           log_abs_total_drift = -log(abs(total_drift)),
+           log_mean_tempo = -log(mean_tempo)) %>% 
+    get_lmer_model(dv = c("log_abs_drift", 
+                          "mean_tempo", 
+                          "log_abs_total_drift"), 
+                   fixed = "condition", 
+                   ranef = c("piece", "day"))
+  
+}
+
 plot_error_rates <- function(note_tracks, note_tracks_annotated){
-  browser()
   tmp <- note_tracks %>%
     left_join(note_tracks_annotated %>% 
-                distinct(piece_take, headset, condition, piece, repetition, day), 
-              by = c("piece_take", "headset", "piece", "repetition")) %>% 
-    filter(!is.na(pos)) %>% 
-    group_by(condition, piece, day, headset) %>% 
+                distinct(section, headset, condition, piece, repetition, day), 
+              by = c("section", "headset", "piece", "repetition")) %>% 
+    filter(!is.na(pos))
+  
+  tmp <- tmp %>% 
+    inner_join(note_tracks_annotated %>% 
+                 select(note_id, d_pitch) %>% 
+                 filter(!is.na(d_pitch)), 
+               by = "note_id") %>% 
+    mutate(error = error | abs(d_pitch) > 1) 
+  #browser()
+  tmp <- tmp %>% group_by(condition, piece, day, headset) %>% 
     summarise(error_rate = mean(error),
               NLER = -log(error_rate),
               .groups = "drop")
@@ -482,74 +593,77 @@ plot_error_rates <- function(note_tracks, note_tracks_annotated){
     
 }
 
-pad_to_next_power_of_two <- function(x, pad = 0){
-  next_pow2 <- 2^ceiling(log2(length(x)))
-  c(x, rep(pad, next_pow2 - length(x)))
+read_offsets <- function(data_dir = "data/metadata"){
+  fnames <-  list.files(data_dir, "*offsets.rds", full.names = T)  
+  offsets <- fnames[!str_detect(fnames, "hs") & !str_detect(fnames, "all")] %>% map_dfr(~{readRDS(.x)}) %>% 
+    mutate(voice_type = ceiling(headset/2),
+           voice_no = (headset - 1) %% 2 + 1,
+           piece = str_remove(snippet, "_take[0-9]+_hs[0-9]$")) %>% 
+    mutate(section = section_from_fname(snippet))
+  offsets[offsets$take == 33 & offsets$piece == "a1-1" & offsets$headset == 1, ]$offset <- 0
+  offsets[offsets$take == 33 & offsets$piece == "a1-1" & offsets$headset == 1, ]$offset_sec <- 0   
+  offsets  %>% arrange(take, headset, offset)
 }
 
-next_power_of_two <- function(x){
-  2^round(log2(x))  
-}
-get_cc <-function(target, query){
-  lc <- length(target)
-  ls <- length(query)
-  size <- lc - ls
-  stopifnot(size >= 0)
-  query <- c(query, rep(0, size))
-  
-  w_target <- scale(target) * e1071::hamming.window(length(target))
-  w_query <- scale(query) * e1071::hamming.window(length(query))
-  
-  corr <- fft(fft(w_target) * Conj(fft(w_query)), inverse = T)
-  corr %>% abs()
-}
-
-find_snippet <- function(container, snippet, max_win_sec = 2, sr = 48000){
-  #browser()
-  max_win_size <- round(sr * max_win_sec) %>% next_power_of_two() %>% as.integer()
-  
-  target <- pad_to_next_power_of_two(container@left)
-  query <- pad_to_next_power_of_two(snippet@left)
-  if(length(query) > max_win_size){
-    query <- query[1:max_win_size]  
-  }
-  else{
-    max_win_size <- length(query)  
-  }
-  lt <- length(target)
-  lq <- length(query)
-  size <- lt - lq
-  stopifnot(size >= 0)
-  max_windows <- 2 * ceiling(lt/max_win_size) %>% as.integer()
-  hop_size <- as.integer(max_win_size / 2)
-  #browser()
-  messagef("Starting snippet find with %d windows of size %d/%.3f and hop size %d/%.3f (target length: %.3f s, query length: %.3f sec)", 
-           max_windows, max_win_size, max_win_size/sr, hop_size, hop_size/sr, lt/sr, lq/sr)
-  map_dfr(seq(0, max_windows - 1), function(i){
-    if(i %% 10 == 0) message(sprintf("Window %d @offset %d", i, hop_size * i))  
-    #browser()
-    t <- target[seq(1, max_win_size) + hop_size * i]
-    cc <- get_cc(t, query)
-    arg_max <- which.max(cc)
-    tibble(window = i, 
-           window_offset = hop_size * i,
-           window_offset_sec = hop_size * i / sr,
-           arg_max =  arg_max, 
-           max_val = cc[arg_max], 
-           total_offset =  window_offset + arg_max, 
-           total_offset_sec = total_offset/sr
-           )
-  }) %>% mutate(is_max = max_val == max(max_val))
+analyze_tempo_and_drift <- function(clean_nt){
+  tmp <- clean_nt %>% 
+    group_by(section, headset) %>% 
+    mutate(d_pos = c(diff(pos), NA), 
+           ioi = c(diff(real_onset), NA), 
+           nom_ioi = c(diff(nom_onset), NA), 
+           T = ioi/nom_ioi) %>%  
+    ungroup() %>% 
+    filter(d_pos == 1, nom_ioi %in% c(2, 4))
+  map_dfr(c(FALSE, TRUE), function(remove_outlier){
+    map_dfr(unique(tmp$section), function(pt) {
+      tmp2 <- tmp %>% filter(section == pt)
+      if(remove_outlier){
+        tmp2 <- tmp2 %>% filter(!(T %in% (boxplot(tmp2$T) %>% pluck("out"))))
+      }
+      model <- tmp2 %>% lm(T ~ real_onset, data = .) 
+      model_coef <- coef(model)
+      total_drift <- end_to_start_diff(predict(model))
+      bind_cols(tmp2 %>% distinct(section, condition, day, piece, repetition), 
+                tibble(dt =  model_coef[2], 
+                       model_tempo = model_coef[1],     
+                       mean_tempo = mean(tmp2$T),
+                       total_drift = total_drift,
+                       remove_outlier = remove_outlier))
+    })
+    
+  }) 
 }
 
-read_take_audio <- function(audio_dir = "e:/projects/science/MPIEA/projects/cut_circle_voice_data/audios", 
-                            take = 5, headset = 3){
-  take_dir <- file.path(audio_dir, sprintf("take%02d/hs%d", take, headset))
-  full  <- readWave(file.path(take_dir, sprintf("full/take%02d_hs%d.wav", take, headset)))
-  file_list <- list.files(take_dir, pattern = "*.wav", full.names = T)
-  snippets <- map(file_list, function(fn) readWave(fn))
-  names(snippets) <-  file_list %>% basename() %>% tools::file_path_sans_ext()
-  list(full = full, snippets = snippets)
+get_tukeys_lmer <- function(stats, dv = "LMAPE", fixef = "condition", ranef = c("piece", "day", "headset")){
+  tmp <- stats %>% 
+    group_by_at(ranef) %>% 
+    mutate(res = scale(!!sym(dv)) %>% as.numeric()) %>% 
+    distinct_at(c(fixef, ranef, "res"))
+  tmp <- tmp %>% 
+    lm(as.formula(sprintf("res  ~ %s", fixef)), data = .) %>% 
+    aov() %>% 
+    TukeyHSD() %>% 
+    broom::tidy() %>% mutate(p_var_str = sig_stars(adj.p.value))
+  tmp
+}
+
+get_all_tukeys <- function(pitch_stats, pitch_stats_inner, onset_stats, onset_stats_inner){
+  bind_rows(
+    get_tukeys_lmer(pitch_stats, dv = "LMAPE", ranef = c("piece", "day", "headset")) %>% 
+      mutate(type = "intonation_model_LMAPE"),
+    # get_tukeys_lmer(pitch_stats, dv = "MAPE", ranef = c("piece", "day", "headset")) %>% 
+    #   mutate(type = "intonation_model_MAPE"),
+    get_tukeys_lmer(pitch_stats, dv = "LMPP", ranef = c("piece", "day", "headset")) %>% 
+      mutate(type = "intonation_model_LMPP"),
+    get_tukeys_lmer(pitch_stats_inner, dv = "LMAPE", ranef = c("piece", "day", "voice_type")) %>% 
+      mutate(type = "intonation_model_inner_LMAPE"),
+    get_tukeys_lmer(pitch_stats_inner, dv = "LMPP", ranef = c("piece", "day", "voice_type")) %>% 
+      mutate(type = "intonation_model_inner_LMPP"),
+    get_tukeys_lmer(onset_stats, dv = "LMOP", ranef = c("piece", "day")) %>% 
+      mutate(type = "onset_model_LMOP"),
+    get_tukeys_lmer(onset_stats_inner, dv = "LMOP", ranef = c("piece", "day", "voice_type")) %>% 
+      mutate(type = "onset_model_inner_LMOP"))
+    
 }
 read_take_audio_anton <- function(audio_dir = "C:/Users/dassc/desktop/MPIAE/Cut Circle Project", 
                                   day = 1L,
@@ -564,6 +678,7 @@ read_take_audio_anton <- function(audio_dir = "C:/Users/dassc/desktop/MPIAE/Cut 
   list(full = full, snippets = snippets)
 }
 
+<<<<<<< HEAD
 align_take_snippets <- function(audio_dir = "C:/Users/dassc/desktop/MPIAE/Cut Circle Project", 
                                 day = 2L, take = "23", headset = 1, win_size = 20){
   audios <- read_take_audio_anton(audio_dir, day= day, take = take, headset = headset)
@@ -572,3 +687,14 @@ align_take_snippets <- function(audio_dir = "C:/Users/dassc/desktop/MPIAE/Cut Ci
                  audios$snippets[[n]], 
                  max_win_sec = 20) %>% mutate(snippet = n)})
 }
+=======
+get_mean_tukeys <- function(all_tukeys){
+  all_tukeys %>% 
+    group_by(contrast) %>% 
+    summarise(mean_d = mean(estimate),
+              BF05 = mean(adj.p.value < .05)/(.05*n()),
+              BF01 = mean(adj.p.value < .01)/(.01*n()),
+              BF001 = mean(adj.p.value < .001)/(.001*n())) %>% 
+    arrange(desc(abs(mean_d)))  
+}
+>>>>>>> c09179111e3de97db6b07fa1ba6058ddd79cd328
