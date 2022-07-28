@@ -24,8 +24,10 @@ list(
   
   tar_target(offsets, 
              readRDS(file.path(metadata_dir, "all_offsets.rds"))),
+  
   tar_target(note_tracks, 
              read_note_tracks(data_dir)),
+  
   tar_target(note_tracks_annotated, 
              annotate_note_tracks(note_tracks, scores, track_info, offsets)),
   
