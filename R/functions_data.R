@@ -2,15 +2,11 @@ library(tidyverse)
 library(readr)
 library(performance)
 library(broom.mixed)
-<<<<<<< HEAD
-messagef <- function(...) message(sprintf(...))
-=======
 library(tuneR)
 library(tictoc)
 
 messagef <- function(...) message(sprintf(...))
 
->>>>>>> c09179111e3de97db6b07fa1ba6058ddd79cd328
 pieces <- c("j1" = "josquin-virgo", 
             "j2" = "josquin-dung", 
             "a1" = "dufay-agnus1", 
@@ -290,7 +286,7 @@ get_onset_stats_inner_voice <- function(data, max_diff = .3, only_error = F){
       MOE = mean(abs(d_voice[abs(d_voice) < max_diff]), na.rm = T),
       MOP  = mean(sd(d_voice[abs(d_voice) < max_diff], na.rm = T)),
       LMOE = -log(MOE),
-      LMOP  = -log(MOP), .groups = "drop") 
+      LMOP = -log(MOP), .groups = "drop") 
   # %>% 
   #   filter(section != "take21:dufay-agnus2:r2")
   
@@ -510,7 +506,7 @@ get_onset_stats <- function(pitch_data, remove_outlier = T, only_error = F){
   indicators <- indicators %>%
     group_by(section, condition, day, piece, repetition) %>%
     summarise(MOP = mean(OP, na.rm = T),
-              LMOP = - -log(MOP),
+              LMOP = -log(MOP),
               .groups = "drop")  
   indicators
 }
@@ -678,16 +674,6 @@ read_take_audio_anton <- function(audio_dir = "C:/Users/dassc/desktop/MPIAE/Cut 
   list(full = full, snippets = snippets)
 }
 
-<<<<<<< HEAD
-align_take_snippets <- function(audio_dir = "C:/Users/dassc/desktop/MPIAE/Cut Circle Project", 
-                                day = 2L, take = "23", headset = 1, win_size = 20){
-  audios <- read_take_audio_anton(audio_dir, day= day, take = take, headset = headset)
-  take_pos <- map_dfr(names(audios$snippets), function(n){
-    find_snippet(audios$full, 
-                 audios$snippets[[n]], 
-                 max_win_sec = 20) %>% mutate(snippet = n)})
-}
-=======
 get_mean_tukeys <- function(all_tukeys){
   all_tukeys %>% 
     group_by(contrast) %>% 
@@ -697,4 +683,3 @@ get_mean_tukeys <- function(all_tukeys){
               BF001 = mean(adj.p.value < .001)/(.001*n())) %>% 
     arrange(desc(abs(mean_d)))  
 }
->>>>>>> c09179111e3de97db6b07fa1ba6058ddd79cd328
