@@ -208,7 +208,7 @@ tar_read(main_effects_LMOP)
 tar_read(main_effects_LMOP_inner)
 ```
 
-```{r intonation_effectsize}
+```{r onset_effectsize}
 tar_read(all_tukeys) %>% 
   filter(str_detect(type, "LMOP")) %>% 
   mutate(type = str_replace(type, "onset_model_LMOP", "Onset Precision (Across)"), 

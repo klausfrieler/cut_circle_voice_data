@@ -287,7 +287,7 @@ get_onset_stats_inner_voice <- function(data, max_diff = .3, only_error = F){
       MOE = mean(abs(d_voice[abs(d_voice) < max_diff]), na.rm = T),
       MOP  = mean(sd(d_voice[abs(d_voice) < max_diff], na.rm = T)),
       LMOE = -log(MOE),
-      LMOP  = -log(MOP), .groups = "drop") 
+      LMOP = -log(MOP), .groups = "drop") 
   # %>% 
   #   filter(section != "take21:dufay-agnus2:r2")
   
@@ -508,7 +508,7 @@ get_onset_stats <- function(pitch_data, remove_outlier = T, only_error = F){
   indicators <- indicators %>%
     group_by(section, condition, day, piece, repetition) %>%
     summarise(MOP = mean(OP, na.rm = T),
-              LMOP = - -log(MOP),
+              LMOP = -log(MOP),
               .groups = "drop")  
   indicators
 }
@@ -662,6 +662,18 @@ get_all_tukeys <- function(pitch_stats, pitch_stats_inner, onset_stats, onset_st
     get_tukeys_lmer(onset_stats_inner, dv = "LMOP", ranef = c("piece", "day", "voice_type")) %>% 
       mutate(type = "onset_model_inner_LMOP"))
     
+}
+read_take_audio_anton <- function(audio_dir = "C:/Users/dassc/desktop/MPIAE/Cut Circle Project", 
+                                  day = 1L,
+                                  take = "5b", headset = 1L){
+  take_dir <- file.path(audio_dir, sprintf("Day %s/Take %s", day, take))
+  full  <- tuneR::readWave(file.path(take_dir, 
+                                     sprintf("%02d_H-Set%s.wav", headset, headset)))
+  
+  file_list <- list.files(sprintf("%s/hs%d", take_dir, headset), pattern = "*.wav", full.names = T)
+  snippets <- map(file_list, function(fn) tuneR::readWave(fn))
+  names(snippets) <-  file_list %>% basename() %>% tools::file_path_sans_ext()
+  list(full = full, snippets = snippets)
 }
 
 get_mean_tukeys <- function(all_tukeys){
