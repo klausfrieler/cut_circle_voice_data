@@ -210,6 +210,7 @@ end_to_start_diff <- function(x){
 }
 
 remove_linear_trend <- function(pitch_data, slope = NULL, intercept = NULL){
+  browser()
   if(is.null(slope) || is.null(intercept)){
     model <- lm(d_pitch ~ real_onset, data = pitch_data) 
     intercept <- coef(model)[1]
@@ -295,6 +296,7 @@ get_onset_stats_inner_voice <- function(data, max_diff = .3, only_error = F){
 remove_all_linear_trends <- function(pitch_data, max_error = 1){
   pitch_data <- pitch_data %>% filter(abs(d_pitch) < max_error)
   map_dfr(unique(pitch_data$section), function(tp){
+    browser()
     tmp <- pitch_data %>% 
       filter(section == tp)
     messagef("Removing linear trend for %s", tp)
