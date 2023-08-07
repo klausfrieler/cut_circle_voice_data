@@ -208,6 +208,23 @@ tar_read(main_effects_LMOP)
 tar_read(main_effects_LMOP_inner)
 ```
 
+```{r intonation_effectsize}
+tar_read(all_tukeys) %>% 
+  filter(str_detect(type, "LMOP")) %>% 
+  mutate(type = str_replace(type, "onset_model_LMOP", "Onset Precision (Across)"), 
+         type = str_replace(type, "onset_model_inner_LMOP", "Onset Precision (Within)"), 
+         contrast = str_replace(contrast, "far-apart", "Far Apart"),
+         contrast = str_replace(contrast, "no-touch", "No touch"),
+         contrast = str_replace(contrast, "touch", "Touch"),
+         contrast = str_replace(contrast, "-", " --. "),
+         estimate = round(estimate, 3),
+         type = remove_repeats(type)) %>% 
+  select(Indicator = type, Contrast = contrast, `Cohen's d`= estimate, `p` = p_var_str) %>% 
+  flextable::flextable() %>% 
+  flextable::autofit() %>% 
+  flextable::set_caption("Table 8. Approximate effect sizes global and inner onset precision.")
+
+```
 ### Timing Errors
 
 We analyzed timing errors, again across and within voices. Across voices, we counted any synchronization point as an timing error if the onset precision (standard deviation of onsets) at these points is an outlier in the distribution of all onset precisions (using the usual 1.5 * IQR criterion). Subsequently, we calculated a mixed logistic regression model for errors with condition as fixed effect and day and piece as random effects. The results can be found in Table 8. No significant effect could be found, though, the p values for the *touch* condition is very close to the 5%  significance level. Interestingly, the coefficient is negative, indicating **fewer** errors in the *touch* condition.

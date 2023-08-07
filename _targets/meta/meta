@@ -8,7 +8,7 @@ analyze_tempo_and_drift|function|779d8595d3dbde08|||||||||||||||
 annotate_note_tracks|function|68d8fc1c2457483c|||||||||||||||
 bootstrap_lm|function|43a86e3bce9e9837|||||||||||||||
 check_main_effects|function|26dda86c99879440|||||||||||||||
-clean_note_tracks|stem|3170d9a0dd897971|3f0ccea9cfd686d6|8788cfb98e3f7c4d|-1731588585||t19200.6289578863s|cc32ef8f836e20fb|3685489|rds|local|vector|||1.35||
+clean_note_tracks|stem|3170d9a0dd897971|3f0ccea9cfd686d6|8af40a7455545795|-1731588585||t19374.963804014s|cc32ef8f836e20fb|3685489|rds|local|vector|||1.82||
 data|stem|2bba94d3d398f5bc|cc0367f6cd1864fc|21312ea9a7912a93|1588979285||t19192.6379570636s|996152cdb4743241|2843676|rds|local|vector|||0.4||
 data_18345d6e|branch|9edf6a82fc576177|e37c7fbd2c993917|2c4b0e8bf9e37e08|119485247||t19066.9268854145s|e2350a9b03eb3054|34762|feather|local|vector|data||0.28||
 data_593c6229|branch|3e8aa813a7cc1fe5|e37c7fbd2c993917|2eb7d42fc8ac4831|-1277006603||t19066.9240019642s|8ef40c46ad3516e5|36370|feather|local|vector|data||0.11||
@@ -105,8 +105,8 @@ read_piece_info|function|200c6d19a6205258|||||||||||||||
 read_score_files|function|027babe7ad40a543|||||||||||||||
 read_take_audios|function|8b507a0697576c20|||||||||||||||
 read_track_info|function|9e52e8bcf2348411|||||||||||||||
-remove_all_linear_trends|function|feb0c98846e50f41|||||||||||||||
-remove_linear_trend|function|cc86b311be81cabd|||||||||||||||
+remove_all_linear_trends|function|f3c3ba3753d21702|||||||||||||||
+remove_linear_trend|function|555db564c071944c|||||||||||||||
 remove_outlier|function|ea9b21b824cb7087|||||||||||||||
 remove_repeats|function|eee3e8d91e0957b6|||||||||||||||
 retune_all|function|fcde51e60eef1b0d|||||||||||||||
