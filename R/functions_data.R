@@ -63,7 +63,7 @@ list_csv_files <- function(dir){
 
 read_note_tracks_by_list <- function(file_list){
   outliers <- tibble()
-  browser()
+  #browser()
   col_types <- cols(
     onset = col_double(),
     pitch = col_double(),
@@ -122,7 +122,7 @@ read_note_tracks_by_list <- function(file_list){
 }
 
 read_note_tracks <- function(data_dir, pattern = ".csv"){
-  browser()
+  #browser()
   read_note_tracks_by_list(list.files(data_dir, pattern = pattern, full.names = T))
 }
 
