@@ -502,7 +502,7 @@ get_onset_stats <- function(pitch_data, remove_outlier = T, only_error = F){
   if(remove_outlier){
     before <- nrow(indicators)
     indicators <- remove_outlier(indicators, "OP")
-    messagef("Removed %d events from %d", before - nrow(indicators), before)
+    messagef("Removed %d events out of %d", before - nrow(indicators), before)
   }  
   #browser()
   indicators <- indicators %>%
