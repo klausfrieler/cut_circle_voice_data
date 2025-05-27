@@ -210,7 +210,7 @@ end_to_start_diff <- function(x){
 }
 
 remove_linear_trend <- function(pitch_data, slope = NULL, intercept = NULL){
-  browser()
+  #browser()
   if(is.null(slope) || is.null(intercept)){
     model <- lm(d_pitch ~ real_onset, data = pitch_data) 
     intercept <- coef(model)[1]
@@ -265,7 +265,7 @@ get_onset_stats_inner_voice <- function(data, max_diff = .3, only_error = F){
     mutate(d_voice = voice2 - voice1)
   d_voice <- ret2 %>% pull(d_voice)
   messagef("Removed %d from %d events", length(d_voice) - length(d_voice[abs(d_voice) < max_diff]), length(d_voice))
-  browser()
+  #browser()
   if(only_error){
     if(only_error){
       tmp <- ret2 %>% mutate(error = (abs(d_voice) > max_diff))
@@ -287,7 +287,9 @@ get_onset_stats_inner_voice <- function(data, max_diff = .3, only_error = F){
       MOE = mean(abs(d_voice[abs(d_voice) < max_diff]), na.rm = T),
       MOP  = mean(sd(d_voice[abs(d_voice) < max_diff], na.rm = T)),
       LMOE = -log(MOE),
-      LMOP = -log(MOP), .groups = "drop") 
+      LMOP = -log(MOP), 
+      n_events =n(),
+      .groups = "drop") 
   # %>% 
   #   filter(section != "take21:dufay-agnus2:r2")
   
@@ -296,7 +298,7 @@ get_onset_stats_inner_voice <- function(data, max_diff = .3, only_error = F){
 remove_all_linear_trends <- function(pitch_data, max_error = 1){
   pitch_data <- pitch_data %>% filter(abs(d_pitch) < max_error)
   map_dfr(unique(pitch_data$section), function(tp){
-    browser()
+    #browser()
     tmp <- pitch_data %>% 
       filter(section == tp)
     messagef("Removing linear trend for %s", tp)
@@ -485,7 +487,7 @@ get_onset_stats <- function(pitch_data, remove_outlier = T, only_error = F){
     summarise(OP = sd(real_onset), 
               LMOP = -log(OP),
               .groups = "drop")
-  browser()
+  #browser()
   if(only_error){
     tmp <- indicators %>% mutate(error = (OP %in% (boxplot(indicators$OP) %>% pluck("out"))))
     error_log <- 
@@ -524,6 +526,7 @@ get_vertical_models <- function(vertical_indicators){
 }
 
 get_singing_errors <- function(note_tracks, note_tracks_annotated){
+  browser()
   tmp <- note_tracks %>%
     left_join(note_tracks_annotated %>% 
                 distinct(section, headset, condition, piece, repetition, day), 

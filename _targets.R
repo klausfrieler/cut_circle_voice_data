@@ -11,7 +11,7 @@ source("R/functions_plot.R")
 
 list(
   # Read metadata and do some preparation
-  tar_target(data_dir, "data/note_tracks"),
+  tar_target(data_dir, "data/note_tracks_cut"),
   tar_target(metadata_dir, "data/metadata"),
   tar_target(score_dir, "data/note_data_csv"),
   tar_target(track_info_path, file.path(metadata_dir, "track_coding.xlsx"), format ="file"),
