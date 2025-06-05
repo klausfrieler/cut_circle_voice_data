@@ -27,6 +27,10 @@ voices <- c("hs7" = "soprano1",
 
 voice_types <- str_remove(voices, "[0-9]$") %>% unique()
 
+get_headsets_from_voice_type <- function(voice_type){
+  names(voices)[voices %in% sprintf("%s%d", voice_type, 1:2)]
+}
+
 score_metadata_from_fname <- function(fname){
   map_dfr(basename(fname) %>% tools::file_path_sans_ext() %>% str_split("_"), function(elts){
     #"j1-2"   "take10" "hs3"  
@@ -123,6 +127,8 @@ read_note_tracks_by_list <- function(file_list){
 
 read_note_tracks <- function(data_dir, pattern = ".csv"){
   #browser()
+  messagef("Reading note tracks...")
+  
   read_note_tracks_by_list(list.files(data_dir, pattern = pattern, full.names = T))
 }
 
@@ -234,7 +240,7 @@ get_pitch_stats <- function(data){
     distinct(piece, take, section, day, condition, headset, repetition, MAPE, MPP, LMAPE, LMPP)
 }
 
-get_pitch_stats_inner_voice <- function(data){
+get_pitch_stats_inner_voice <- function(data, max_diff = 2.5){
   ret <-
     data %>% 
     select(section, voice_type, voice_no, condition, day, piece, pos, pitch) %>% 
@@ -244,6 +250,7 @@ get_pitch_stats_inner_voice <- function(data){
   #browser()
   ret <- ret %>% 
     mutate(d_voice = voice2 - voice1) %>% 
+    filter(abs(d_voice) <= max_diff) %>% 
     group_by(section, day, piece, condition, voice_type) %>% 
     summarise(
       MAPE = mean(abs(d_voice), na.rm = T),
@@ -256,7 +263,7 @@ get_onset_stats_inner_voice <- function(data, max_diff = .3, only_error = F){
   # ret1 <- data %>%
   #   group_by(section, voice_type, nom_onset, piece, condition, day) %>% 
   #   summarise(d_onset = abs(diff(real_onset)), .groups = "drop")
-  # browser()
+  #browser()
   ret2 <- data %>% 
     select(section, voice_type, voice_no, condition, day, piece, pos, real_onset) %>% 
     pivot_wider(id_cols = c(section, voice_type, condition, day, piece, pos), 
